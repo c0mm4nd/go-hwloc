@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/gostor/gohwloc/topology"
+	"github.com/carmark/gohwloc/topology"
 )
 
 func main() {
@@ -26,4 +26,6 @@ func main() {
 		log.Fatal(err)
 	}
 	fmt.Printf("Cores: %d\nDepth: %d\n%#v\n", nbcores, t.Depth, obj)
+	res, _ := obj.GetInfo("")
+	fmt.Printf("Info: %v\n", res)
 }
