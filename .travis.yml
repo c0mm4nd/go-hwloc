@@ -1,0 +1,18 @@
+sudo: required
+language: go
+
+go:
+  - "1.13"
+
+before_install:
+  - git clone https://github.com/open-mpi/hwloc
+  - cd hwloc
+  - ./autogen.sh
+  - ./configure --enable-static --disable-shared LDFLAGS="-static"
+  - make LDFLAGS=-all-static
+  - sudo make install
+  - sudo ldconfig /usr/local/lib
+  - cd -
+
+script:
+  - go test ./...
