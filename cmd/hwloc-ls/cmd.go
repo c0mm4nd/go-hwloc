@@ -17,7 +17,12 @@ limitations under the License.
 package main
 
 import (
+	"fmt"
+	"strconv"
+
 	"github.com/spf13/cobra"
+
+	"github.com/carmark/gohwloc/topology"
 )
 
 type lstopoOptions struct {
@@ -46,5 +51,41 @@ func newCommand() *cobra.Command {
 }
 
 func lstopo(opts lstopoOptions) error {
+	t, _ := topology.NewTopology()
+	t.Load()
+	defer t.Destroy()
+	n, _ := t.GetNbobjsByType(topology.HwlocObjOSDevice)
+	fmt.Printf("t.GetNbobjsByType: %d\n", n)
+	for i := 0; i < n; i++ {
+		obj, _ := t.GetObjByType(topology.HwlocObjOSDevice, uint(i))
+		fmt.Printf("%s:\n", obj.Name)
+		// obj->subtype also contains CUDA or OpenCL since v2.0
+		s, _ := obj.GetInfo("Backend")
+		//fmt.Printf("Info: %s\n", s)
+		if s == "CUDA" {
+			// This is a CUDA device
+		} else if s == "OpenCL" {
+			// This is an OpenCL device
+			platformid, err := strconv.Atoi(obj.Name[len("opencl") : len("opencl")+1])
+			if err != nil {
+				return err
+			}
+			fmt.Printf("OpenCL platform %d\n", platformid)
+			devid, err := strconv.Atoi(obj.Name[len("opencl0d"):])
+			if err != nil {
+				return err
+			}
+			fmt.Printf("OpenCL device %d\n", devid)
+			s, _ = obj.GetInfo("GPUModel")
+			if s != "" {
+				fmt.Printf("Model: %s\n", s)
+			}
+			s, _ = obj.GetInfo("OpenCLGlobalMemorySize")
+			if s != "" {
+				fmt.Printf("Memory: %s\n", s)
+			}
+		}
+		fmt.Printf("\n")
+	}
 	return nil
 }

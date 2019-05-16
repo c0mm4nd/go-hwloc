@@ -1,5 +1,9 @@
 package topology
 
+// #cgo LDFLAGS: -lhwloc
+// #include <hwloc.h>
+import "C"
+
 // brief Type of topology object.
 // Do not rely on the ordering or completeness of the values as new ones
 // may be defined in the future!  If you need to compare types, use
@@ -302,4 +306,6 @@ type HwlocObject struct {
 	// UserData Application-given private data pointer,
 	// initialized to \c NULL, use it as you wish.
 	UserData []byte
+
+	private C.hwloc_obj_t
 }

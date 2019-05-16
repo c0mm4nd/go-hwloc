@@ -22,6 +22,7 @@ func NewTopology() (*Topology, error) {
 }
 
 func (t *Topology) Load() error {
+	C.hwloc_topology_set_io_types_filter(t.hwloc_topology, C.HWLOC_TYPE_FILTER_KEEP_IMPORTANT)
 	C.hwloc_topology_set_icache_types_filter(t.hwloc_topology, C.HWLOC_TYPE_FILTER_KEEP_ALL)
 	C.hwloc_topology_load(t.hwloc_topology) // actual detection
 	t.HwlocObject.Depth = int(C.hwloc_topology_get_depth(t.hwloc_topology))
@@ -181,6 +182,44 @@ func (t *Topology) GetRootObj() (*HwlocObject, error) {
 		TotalMemory:  uint64(obj.total_memory),
 		Depth:        int(obj.depth),
 		LogicalIndex: uint(obj.logical_index),
+		private:      obj,
+	}
+	return ret, nil
+}
+
+// GetObjByDepth Returns the topology object at logical index idx from depth
+func (t *Topology) GetObjByDepth(depth int, idx uint) (*HwlocObject, error) {
+	obj := C.hwloc_get_obj_by_depth(t.hwloc_topology, C.int(depth), C.uint(idx))
+	ret := &HwlocObject{
+		Type:         HwlocObjType(obj._type),
+		SubType:      C.GoString(obj.subtype),
+		OSIndex:      uint(obj.os_index),
+		Name:         C.GoString(obj.name),
+		TotalMemory:  uint64(obj.total_memory),
+		Depth:        int(obj.depth),
+		LogicalIndex: uint(obj.logical_index),
+		private:      obj,
+	}
+	return ret, nil
+}
+
+// GetObjByType Returns the topology object at logical index \p idx with type \p type
+/*
+ * If no object for that type exists, \c NULL is returned.
+ * If there are several levels with objects of that type (::HWLOC_OBJ_GROUP),
+ * \c NULL is returned and the caller may fallback to hwloc_get_obj_by_depth().
+ */
+func (t *Topology) GetObjByType(ht HwlocObjType, idx uint) (*HwlocObject, error) {
+	obj := C.hwloc_get_obj_by_type(t.hwloc_topology, C.hwloc_obj_type_t(ht), C.uint(idx))
+	ret := &HwlocObject{
+		Type:         HwlocObjType(obj._type),
+		SubType:      C.GoString(obj.subtype),
+		OSIndex:      uint(obj.os_index),
+		Name:         C.GoString(obj.name),
+		TotalMemory:  uint64(obj.total_memory),
+		Depth:        int(obj.depth),
+		LogicalIndex: uint(obj.logical_index),
+		private:      obj,
 	}
 	return ret, nil
 }
