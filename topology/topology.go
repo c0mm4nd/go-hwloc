@@ -2,13 +2,11 @@ package topology
 
 // #cgo CFLAGS: -g -Wall
 // #cgo LDFLAGS: -lhwloc
-// #include <stdlib.h>
-// #include <stdio.h>
 // #include <hwloc.h>
 import "C"
+import "unsafe"
 
 type Topology struct {
-	HwlocObject
 	hwloc_topology C.hwloc_topology_t
 }
 
@@ -25,7 +23,7 @@ func (t *Topology) Load() error {
 	C.hwloc_topology_set_io_types_filter(t.hwloc_topology, C.HWLOC_TYPE_FILTER_KEEP_IMPORTANT)
 	C.hwloc_topology_set_icache_types_filter(t.hwloc_topology, C.HWLOC_TYPE_FILTER_KEEP_ALL)
 	C.hwloc_topology_load(t.hwloc_topology) // actual detection
-	t.HwlocObject.Depth = int(C.hwloc_topology_get_depth(t.hwloc_topology))
+	//t.HwlocObject.Depth = int(C.hwloc_topology_get_depth(t.hwloc_topology))
 	return nil
 }
 
@@ -226,4 +224,304 @@ func (t *Topology) GetObjByType(ht HwlocObjType, idx uint) (*HwlocObject, error)
 
 func (t *Topology) Destroy() {
 	C.hwloc_topology_destroy(t.hwloc_topology)
+}
+
+// SetCPUBind Bind current process or thread on cpus given in physical bitmap set.
+/*
+ * \return -1 with errno set to ENOSYS if the action is not supported
+ * \return -1 with errno set to EXDEV if the binding cannot be enforced
+ */
+func (t *Topology) SetCPUBind(set HwlocCPUSet, flags int) error {
+	C.hwloc_set_cpubind(t.hwloc_topology, set.hwloc_cpuset_t, C.int(flags))
+	return nil
+}
+
+// GetCPUBind Get current process or thread binding.
+/*
+ * Writes into \p set the physical cpuset which the process or thread (according to \e
+ * flags) was last bound to.
+ */
+func (t *Topology) GetCPUBind(flags int) (HwlocCPUSet, error) {
+	var set HwlocCPUSet
+	set.hwloc_cpuset_t = C.hwloc_bitmap_alloc()
+	C.hwloc_get_cpubind(t.hwloc_topology, set.hwloc_cpuset_t, C.int(flags))
+	// TODO convert hwloc_cpuset_t to BitMap
+	return set, nil
+}
+
+// SetProcCPUBind Bind a process pid on cpus given in physical bitmap set.
+/* \note \p hwloc_pid_t is \p pid_t on Unix platforms,
+ * and \p HANDLE on native Windows platforms.
+ *
+ * \note As a special case on Linux, if a tid (thread ID) is supplied
+ * instead of a pid (process ID) and ::HWLOC_CPUBIND_THREAD is passed in flags,
+ * the binding is applied to that specific thread.
+ *
+ * \note On non-Linux systems, ::HWLOC_CPUBIND_THREAD can not be used in \p flags.
+ */
+func (t *Topology) SetProcCPUBind(pid HwlocPid, set HwlocCPUSet, flags int) error {
+	C.hwloc_set_proc_cpubind(t.hwloc_topology, C.hwloc_pid_t(pid), set.hwloc_cpuset_t, C.int(flags))
+	return nil
+}
+
+// GetProcCPUBind Get the current physical binding of process pid.
+/*
+ * \note \p hwloc_pid_t is \p pid_t on Unix platforms,
+ * and \p HANDLE on native Windows platforms.
+ *
+ * \note As a special case on Linux, if a tid (thread ID) is supplied
+ * instead of a pid (process ID) and HWLOC_CPUBIND_THREAD is passed in flags,
+ * the binding for that specific thread is returned.
+ *
+ * \note On non-Linux systems, HWLOC_CPUBIND_THREAD can not be used in \p flags.
+ */
+func (t *Topology) GetProcCPUBind(pid HwlocPid, flags int) (HwlocCPUSet, error) {
+	var set HwlocCPUSet
+	set.hwloc_cpuset_t = C.hwloc_bitmap_alloc()
+	C.hwloc_get_proc_cpubind(t.hwloc_topology, C.hwloc_pid_t(pid), set.hwloc_cpuset_t, C.int(flags))
+	// TODO convert hwloc_cpuset_t to BitMap
+	return set, nil
+}
+
+//#ifdef hwloc_thread_t
+/** \brief Bind a thread \p thread on cpus given in physical bitmap \p set.
+ *
+ * \note \p hwloc_thread_t is \p pthread_t on Unix platforms,
+ * and \p HANDLE on native Windows platforms.
+ *
+ * \note ::HWLOC_CPUBIND_PROCESS can not be used in \p flags.
+ */
+//HWLOC_DECLSPEC int hwloc_set_thread_cpubind(hwloc_topology_t topology, hwloc_thread_t thread, hwloc_const_cpuset_t set, int flags);
+//#endif
+
+//#ifdef hwloc_thread_t
+/** \brief Get the current physical binding of thread \p tid.
+ *
+ * \note \p hwloc_thread_t is \p pthread_t on Unix platforms,
+ * and \p HANDLE on native Windows platforms.
+ *
+ * \note ::HWLOC_CPUBIND_PROCESS can not be used in \p flags.
+ */
+//HWLOC_DECLSPEC int hwloc_get_thread_cpubind(hwloc_topology_t topology, hwloc_thread_t thread, hwloc_cpuset_t set, int flags);
+//#endif
+
+// GetLastCPULocation Get the last physical CPU where the current process or thread ran.
+/*
+ * The operating system may move some tasks from one processor
+ * to another at any time according to their binding,
+ * so this function may return something that is already
+ * outdated.
+ *
+ * flags can include either ::HWLOC_CPUBIND_PROCESS or ::HWLOC_CPUBIND_THREAD to
+ * specify whether the query should be for the whole process (union of all CPUs
+ * on which all threads are running), or only the current thread. If the
+ * process is single-threaded, flags can be set to zero to let hwloc use
+ * whichever method is available on the underlying OS.
+ */
+func (t *Topology) GetLastCPULocation(flags int) (HwlocCPUSet, error) {
+	var set HwlocCPUSet
+	set.hwloc_cpuset_t = C.hwloc_bitmap_alloc()
+	C.hwloc_get_last_cpu_location(t.hwloc_topology, set.hwloc_cpuset_t, C.int(flags))
+	// TODO convert hwloc_cpuset_t to BitMap
+	return set, nil
+}
+
+// GetProcLastCPULocation Get the last physical CPU where a process ran.
+/* The operating system may move some tasks from one processor
+ * to another at any time according to their binding,
+ * so this function may return something that is already
+ * outdated.
+ *
+ * \note \p hwloc_pid_t is \p pid_t on Unix platforms,
+ * and \p HANDLE on native Windows platforms.
+ *
+ * \note As a special case on Linux, if a tid (thread ID) is supplied
+ * instead of a pid (process ID) and ::HWLOC_CPUBIND_THREAD is passed in flags,
+ * the last CPU location of that specific thread is returned.
+ *
+ * \note On non-Linux systems, ::HWLOC_CPUBIND_THREAD can not be used in \p flags.
+ */
+func (t *Topology) GetProcLastCPULocation(pid HwlocPid, flags int) (HwlocCPUSet, error) {
+	var set HwlocCPUSet
+	set.hwloc_cpuset_t = C.hwloc_bitmap_alloc()
+	C.hwloc_get_proc_last_cpu_location(t.hwloc_topology, C.hwloc_pid_t(pid), set.hwloc_cpuset_t, C.int(flags))
+	// TODO convert hwloc_cpuset_t to BitMap
+	return set, nil
+}
+
+// SetPid Change which process the topology is viewed from.
+/*
+ * On some systems, processes may have different views of the machine, for
+ * instance the set of allowed CPUs. By default, hwloc exposes the view from
+ * the current process. Calling hwloc_topology_set_pid() permits to make it
+ * expose the topology of the machine from the point of view of another
+ * process.
+ *
+ * \note \p hwloc_pid_t is \p pid_t on Unix platforms,
+ * and \p HANDLE on native Windows platforms.
+ *
+ * \note -1 is returned and errno is set to ENOSYS on platforms that do not
+ * support this feature.
+ */
+func (t *Topology) SetPid(pid HwlocPid) error {
+	C.hwloc_topology_set_pid(t.hwloc_topology, C.hwloc_pid_t(pid))
+	return nil
+}
+
+// SetSynthetic Enable synthetic topology.
+/*
+ * Gather topology information from the given \p description,
+ * a space-separated string of <type:number> describing
+ * the object type and arity at each level.
+ * All types may be omitted (space-separated string of numbers) so that
+ * hwloc chooses all types according to usual topologies.
+ * See also the \ref synthetic.
+ *
+ * Setting the environment variable HWLOC_SYNTHETIC
+ * may also result in this behavior.
+ *
+ * If \p description was properly parsed and describes a valid topology
+ * configuration, this function returns 0.
+ * Otherwise -1 is returned and errno is set to EINVAL.
+ *
+ * Note that this function does not actually load topology
+ * information; it just tells hwloc where to load it from.  You'll
+ * still need to invoke hwloc_topology_load() to actually load the
+ * topology information.
+ *
+ * \note For convenience, this backend provides empty binding hooks which just
+ * return success.
+ *
+ * \note On success, the synthetic component replaces the previously enabled
+ * component (if any), but the topology is not actually modified until
+ * hwloc_topology_load().
+ */
+func (t *Topology) SetSynthetic(desc string) error {
+	cdesc := C.CString(desc)
+	defer C.free(unsafe.Pointer(cdesc))
+	C.hwloc_topology_set_synthetic(t.hwloc_topology, cdesc)
+	return nil
+}
+
+// SetXMLFile Enable XML-file based topology.
+/*
+ * Gather topology information from the XML file given at \p xmlpath.
+ * Setting the environment variable HWLOC_XMLFILE may also result in this behavior.
+ * This file may have been generated earlier with hwloc_topology_export_xml() in hwloc/export.h,
+ * or lstopo file.xml.
+ *
+ * Note that this function does not actually load topology
+ * information; it just tells hwloc where to load it from.  You'll
+ * still need to invoke hwloc_topology_load() to actually load the
+ * topology information.
+ *
+ * \return -1 with errno set to EINVAL on failure to read the XML file.
+ *
+ * \note See also hwloc_topology_set_userdata_import_callback()
+ * for importing application-specific object userdata.
+ *
+ * \note For convenience, this backend provides empty binding hooks which just
+ * return success.  To have hwloc still actually call OS-specific hooks, the
+ * ::HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM has to be set to assert that the loaded
+ * file is really the underlying system.
+ *
+ * \note On success, the XML component replaces the previously enabled
+ * component (if any), but the topology is not actually modified until
+ * hwloc_topology_load().
+ */
+func (t *Topology) SetXMLFile(file string) error {
+	f := C.CString(file)
+	defer C.free(unsafe.Pointer(f))
+	C.hwloc_topology_set_xml(t.hwloc_topology, f)
+	return nil
+}
+
+// SetXMLBuffer Enable XML based topology using a memory buffer (instead of
+/* a file, as with hwloc_topology_set_xml()).
+ *
+ * Gather topology information from the XML memory buffer given at \p
+ * buffer and of length \p size.  This buffer may have been filled
+ * earlier with hwloc_topology_export_xmlbuffer() in hwloc/export.h.
+ *
+ * Note that this function does not actually load topology
+ * information; it just tells hwloc where to load it from.  You'll
+ * still need to invoke hwloc_topology_load() to actually load the
+ * topology information.
+ *
+ * \return -1 with errno set to EINVAL on failure to read the XML buffer.
+ *
+ * \note See also hwloc_topology_set_userdata_import_callback()
+ * for importing application-specific object userdata.
+ *
+ * \note For convenience, this backend provides empty binding hooks which just
+ * return success.  To have hwloc still actually call OS-specific hooks, the
+ * ::HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM has to be set to assert that the loaded
+ * file is really the underlying system.
+ *
+ * \note On success, the XML component replaces the previously enabled
+ * component (if any), but the topology is not actually modified until
+ * hwloc_topology_load().
+ */
+func (t *Topology) SetXMLBuffer() {
+
+}
+
+// SetFlags Set OR'ed flags to non-yet-loaded topology.
+/*
+ * Set a OR'ed set of ::hwloc_topology_flags_e onto a topology that was not yet loaded.
+ *
+ * If this function is called multiple times, the last invokation will erase
+ * and replace the set of flags that was previously set.
+ *
+ * The flags set in a topology may be retrieved with hwloc_topology_get_flags()
+ */
+func (t *Topology) SetFlags(flags HwlocTopologyFlags) error {
+	C.hwloc_topology_set_flags(t.hwloc_topology, C.ulong(flags))
+	return nil
+}
+
+// GetFlags Get OR'ed flags of a topology.
+/*
+ * Get the OR'ed set of ::hwloc_topology_flags_e of a topology.
+ *
+ * \return the flags previously set with hwloc_topology_set_flags().
+ */
+func (t *Topology) GetFlags() (HwlocTopologyFlags, error) {
+	flags := C.hwloc_topology_get_flags(t.hwloc_topology)
+	return HwlocTopologyFlags(flags), nil
+}
+
+// IsThisSystem Does the topology context come from this system?
+/*
+ * return 1 if this topology context was built using the system
+ * running this program.
+ * return 0 instead (for instance if using another file-system root,
+ * a XML topology file, or a synthetic topology).
+ */
+func (t *Topology) IsThisSystem() (bool, error) {
+	res := C.hwloc_topology_is_thissystem(t.hwloc_topology)
+	if res == 1 {
+		return true, nil
+	}
+	return false, nil
+}
+
+// GetSupport Retrieve the topology support.
+/*
+ * Each flag indicates whether a feature is supported.
+ * If set to 0, the feature is not supported.
+ * If set to 1, the feature is supported, but the corresponding
+ * call may still fail in some corner cases.
+ *
+ * These features are also listed by hwloc-info \--support
+ */
+func (t *Topology) GetSupport() (*HwlocTopologySupport, error) {
+	s := C.hwloc_topology_get_support(t.hwloc_topology)
+	return &HwlocTopologySupport{
+		discovery: &HwlocTopologyDiscoverySupport{
+			PU: uint8(s.discovery.pu),
+		},
+		cpubind: &HwlocTopologyCPUBindSupport{},
+		membind: &HwlocTopologyMemBindSupport{},
+	}, nil
 }

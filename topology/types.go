@@ -3,8 +3,26 @@ package topology
 // #cgo LDFLAGS: -lhwloc
 // #include <hwloc.h>
 import "C"
+import "github.com/carmark/gohwloc/bitmap"
 
-// brief Type of topology object.
+// HwlocNodeSet A node set is a bitmap whose bits are set according to NUMA memory node physical OS indexes.
+/*
+ * It may be consulted and modified with the bitmap API as any
+ * ::hwloc_bitmap_t (see hwloc/bitmap.h).
+ * Each bit may be converted into a NUMA node object using
+ * hwloc_get_numanode_obj_by_os_index().
+ *
+ * When binding memory on a system without any NUMA node,
+ * the single main memory bank is considered as NUMA node #0.
+ *
+ * See also \ref hwlocality_helper_nodeset_convert.
+ */
+type HwlocNodeSet struct {
+	bitmap.BitMap
+	hwloc_nodeset_t C.hwloc_bitmap_t
+}
+
+// HwlocObjType Type of topology object.
 // Do not rely on the ordering or completeness of the values as new ones
 // may be defined in the future!  If you need to compare types, use
 // hwloc_compare_types() instead.
@@ -294,10 +312,10 @@ type HwlocObject struct {
 	IOFirstChild     *HwlocObject
 	MiscArity        uint
 	MiscFirstChild   *HwlocObject
-	CPUSet           []byte
-	CompleteCPUSet   []byte
-	NodeSet          []byte
-	CompleteNodeSet  []byte
+	CPUSet           HwlocCPUSet
+	CompleteCPUSet   HwlocCPUSet
+	NodeSet          HwlocNodeSet
+	CompleteNodeSet  HwlocNodeSet
 	// Infos Array of stringified info type=name.
 	Infos map[string]string
 
@@ -308,4 +326,301 @@ type HwlocObject struct {
 	UserData []byte
 
 	private C.hwloc_obj_t
+}
+
+type HwlocPid uintptr
+
+// HwlocCPUBindFlag Process/Thread binding flags.
+/*
+ * These bit flags can be used to refine the binding policy.
+ *
+ * The default (0) is to bind the current process, assumed to be
+ * single-threaded, in a non-strict way.  This is the most portable
+ * way to bind as all operating systems usually provide it.
+ *
+ * \note Not all systems support all kinds of binding.  See the
+ * "Detailed Description" section of \ref hwlocality_cpubinding for a
+ * description of errors that can occur.
+ */
+type HwlocCPUBindFlag uint8
+
+const (
+	// HwlocCPUBindProcess Bind all threads of the current (possibly) multithreaded process.
+	HwlocCPUBindProcess HwlocCPUBindFlag = 1 << 0
+	// HwlocCPUBindThread Bind current thread of current process.
+	HwlocCPUBindThread HwlocCPUBindFlag = 1 << 1
+	// HwlocCPUBindStrict Request for strict binding from the OS.
+	/* By default, when the designated CPUs are all busy while other
+	 * CPUs are idle, operating systems may execute the thread/process
+	 * on those other CPUs instead of the designated CPUs, to let them
+	 * progress anyway.  Strict binding means that the thread/process
+	 * will _never_ execute on other cpus than the designated CPUs, even
+	 * when those are busy with other tasks and other CPUs are idle.
+	 *
+	 * \note Depending on the operating system, strict binding may not
+	 * be possible (e.g., the OS does not implement it) or not allowed
+	 * (e.g., for an administrative reasons), and the function will fail
+	 * in that case.
+	 *
+	 * When retrieving the binding of a process, this flag checks
+	 * whether all its threads  actually have the same binding. If the
+	 * flag is not given, the binding of each thread will be
+	 * accumulated.
+	 *
+	 * \note This flag is meaningless when retrieving the binding of a
+	 * thread.
+	 */
+	HwlocCPUBindStrict HwlocCPUBindFlag = 1 << 2
+
+	// HwlocCPUBindNomemBind Avoid any effect on memory binding
+	/* On some operating systems, some CPU binding function would also
+	 * bind the memory on the corresponding NUMA node.  It is often not
+	 * a problem for the application, but if it is, setting this flag
+	 * will make hwloc avoid using OS functions that would also bind
+	 * memory.  This will however reduce the support of CPU bindings,
+	 * i.e. potentially return -1 with errno set to ENOSYS in some
+	 * cases.
+	 *
+	 * This flag is only meaningful when used with functions that set
+	 * the CPU binding.  It is ignored when used with functions that get
+	 * CPU binding information.
+	 * \hideinitializer
+	 */
+	HwlocCPUBindNomemBind HwlocCPUBindFlag = 1 << 3
+)
+
+// HwlocMemBindPolicy Memory binding policy.
+/*
+ * These constants can be used to choose the binding policy.  Only one policy can
+ * be used at a time (i.e., the values cannot be OR'ed together).
+ *
+ * Not all systems support all kinds of binding.
+ * hwloc_topology_get_support() may be used to query about the actual memory
+ * binding policy support in the currently used operating system.
+ * See the "Detailed Description" section of \ref hwlocality_membinding
+ * for a description of errors that can occur.
+ */
+type HwlocMemBindPolicy int
+
+const (
+	// HwlocMemBindDefault Reset the memory allocation policy to the system default.
+	/* Depending on the operating system, this may correspond to
+	 * ::HWLOC_MEMBIND_FIRSTTOUCH (Linux),
+	 * or ::HWLOC_MEMBIND_BIND (AIX, HP-UX, Solaris, Windows).
+	 * This policy is never returned by get membind functions.
+	 * The nodeset argument is ignored.
+	 */
+	HwlocMemBindDefault HwlocMemBindPolicy = 0
+	// HwlocMemBindFirstTouch Allocate each memory page individually on the local NUMA node of the thread that touches it.
+	/*
+	 * The given nodeset should usually be hwloc_topology_get_topology_nodeset()
+	 * so that the touching thread may run and allocate on any node in the system.
+	 *
+	 * On AIX, if the nodeset is smaller, pages are allocated locally (if the local
+	 * node is in the nodeset) or from a random non-local node (otherwise).
+	 */
+	HwlocMemBindFirstTouch HwlocMemBindPolicy = 1
+	// HwlocMemBindBind Allocate memory on the specified nodes.
+	HwlocMemBindBind HwlocMemBindPolicy = 1
+	// HwlocMemBindInterleave Allocate memory on the given nodes in an interleaved round-robin manner
+	/*The precise layout of the memory across
+	 * multiple NUMA nodes is OS/system specific. Interleaving can be
+	 * useful when threads distributed across the specified NUMA nodes
+	 * will all be accessing the whole memory range concurrently, since
+	 * the interleave will then balance the memory references.
+	 */
+	HwlocMemBindInterleave HwlocMemBindPolicy = 1
+	// HwlocMemBindNextTouch For each page bound with this policy, by next time
+	// it is touched (and next time only), it is moved from its current
+	// location to the local NUMA node of the thread where the memory
+	// reference occurred (if it needs to be moved at all).
+	HwlocMemBindNextTouch HwlocMemBindPolicy = 1
+	// HwlocMemBindMixed Returned by get_membind() functions when multiple
+	/* threads or parts of a memory area have differing memory binding
+	 * policies.
+	 * Also returned when binding is unknown because binding hooks are empty
+	 * when the topology is loaded from XML without HWLOC_THISSYSTEM=1, etc.
+	 */
+	HwlocMemBindMixed HwlocMemBindPolicy = -1
+)
+
+// HwlocMemBindFlag Memory binding flags.
+/*
+ * These flags can be used to refine the binding policy.
+ * All flags can be logically OR'ed together with the exception of
+ * ::HWLOC_MEMBIND_PROCESS and ::HWLOC_MEMBIND_THREAD;
+ * these two flags are mutually exclusive.
+ *
+ * Not all systems support all kinds of binding.
+ * hwloc_topology_get_support() may be used to query about the actual memory
+ * binding support in the currently used operating system.
+ * See the "Detailed Description" section of \ref hwlocality_membinding
+ * for a description of errors that can occur.
+ */
+type HwlocMemBindFlag uint8
+
+const (
+	// HwlocMemBindProcess Set policy for all threads of the specified (possibly
+	// multithreaded) process.  This flag is mutually exclusive with ::HWLOC_MEMBIND_THREAD.
+	HwlocMemBindProcess HwlocMemBindFlag = 1 << 0
+	// HwlocMemBindThread Set policy for a specific thread of the current process.
+	// This flag is mutually exclusive with ::HWLOC_MEMBIND_PROCESS.
+	HwlocMemBindThread HwlocMemBindFlag = 1 << 1
+	// HwlocMemBindStrict  Request strict binding from the OS.
+	/* The function will fail if the binding can not be guaranteed / completely enforced.
+	 *
+	 * This flag has slightly different meanings depending on which
+	 * function it is used with.
+	 */
+	HwlocMemBindStrict HwlocMemBindFlag = 1 << 2
+	// HwlocMemBindMigrate Migrate existing allocated memory.
+	/* If the memory cannot
+	 * be migrated and the ::HWLOC_MEMBIND_STRICT flag is passed, an error
+	 * will be returned.
+	 */
+	HwlocMemBindMigrate HwlocMemBindFlag = 1 << 3
+	// HwlocMemBindNoCPUBind Avoid any effect on CPU binding.
+	/*
+	 * On some operating systems, some underlying memory binding
+	 * functions also bind the application to the corresponding CPU(s).
+	 * Using this flag will cause hwloc to avoid using OS functions that
+	 * could potentially affect CPU bindings.  Note, however, that using
+	 * NOCPUBIND may reduce hwloc's overall memory binding
+	 * support. Specifically: some of hwloc's memory binding functions
+	 * may fail with errno set to ENOSYS when used with NOCPUBIND.
+	 */
+	HwlocMemBindNoCPUBind HwlocMemBindFlag = 1 << 4
+	// HwlocMemBindByNodeSet Consider the bitmap argument as a nodeset.
+	/*
+	 * The bitmap argument is considered a nodeset if this flag is given,
+	 * or a cpuset otherwise by default.
+	 *
+	 * Memory binding by CPU set cannot work for CPU-less NUMA memory nodes.
+	 * Binding by nodeset should therefore be preferred whenever possible.
+	 */
+	HwlocMemBindByNodeSet HwlocMemBindFlag = 1 << 5
+)
+
+// HwlocTopologyFlags Flags to be set onto a topology context before load.
+/*
+ * Flags should be given to hwloc_topology_set_flags().
+ * They may also be returned by hwloc_topology_get_flags().
+ */
+type HwlocTopologyFlags uint64
+
+var defaultFlag uint64 = 1
+var (
+	// HwlocTopologyFlagIncludeDisallowed Detect the whole system, ignore reservations, include disallowed objects.
+	/*
+	 * Gather all resources, even if some were disabled by the administrator.
+	 * For instance, ignore Linux Cgroup/Cpusets and gather all processors and memory nodes.
+	 *
+	 * When this flag is not set, PUs and NUMA nodes that are disallowed are not added to the topology.
+	 * Parent objects (package, core, cache, etc.) are added only if some of their children are allowed.
+	 * All existing PUs and NUMA nodes in the topology are allowed.
+	 * hwloc_topology_get_allowed_cpuset() and hwloc_topology_get_allowed_nodeset()
+	 * are equal to the root object cpuset and nodeset.
+	 *
+	 * When this flag is set, the actual sets of allowed PUs and NUMA nodes are given
+	 * by hwloc_topology_get_allowed_cpuset() and hwloc_topology_get_allowed_nodeset().
+	 * They may be smaller than the root object cpuset and nodeset.
+	 *
+	 * If the current topology is exported to XML and reimported later, this flag
+	 * should be set again in the reimported topology so that disallowed resources
+	 * are reimported as well.
+	 */
+	HwlocTopologyFlagIncludeDisallowed = HwlocTopologyFlags(uint64(1) << 0)
+	// HwlocTopologyFlagIsThisSystem Assume that the selected backend provides the topology for the system on which we are running.
+	/*
+	 * This forces hwloc_topology_is_thissystem() to return 1, i.e. makes hwloc assume that
+	 * the selected backend provides the topology for the system on which we are running,
+	 * even if it is not the OS-specific backend but the XML backend for instance.
+	 * This means making the binding functions actually call the OS-specific
+	 * system calls and really do binding, while the XML backend would otherwise
+	 * provide empty hooks just returning success.
+	 *
+	 * Setting the environment variable HWLOC_THISSYSTEM may also result in the
+	 * same behavior.
+	 *
+	 * This can be used for efficiency reasons to first detect the topology once,
+	 * save it to an XML file, and quickly reload it later through the XML
+	 * backend, but still having binding functions actually do bind.
+	 */
+	HwlocTopologyFlagIsThisSystem = HwlocTopologyFlags(uint64(1) << 1)
+	// HwlocTopologyFlagThisSystemAllowedResources Get the set of allowed resources from the local operating system even if the topology was loaded from XML or synthetic description.
+	/*
+	 * If the topology was loaded from XML or from a synthetic string,
+	 * restrict it by applying the current process restrictions such as
+	 * Linux Cgroup/Cpuset.
+	 *
+	 * This is useful when the topology is not loaded directly from
+	 * the local machine (e.g. for performance reason) and it comes
+	 * with all resources, while the running process is restricted
+	 * to only parts of the machine.
+	 *
+	 * This flag is ignored unless ::HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM is
+	 * also set since the loaded topology must match the underlying machine
+	 * where restrictions will be gathered from.
+	 *
+	 * Setting the environment variable HWLOC_THISSYSTEM_ALLOWED_RESOURCES
+	 * would result in the same behavior.
+	 */
+	HwlocTopologyFlagThisSystemAllowedResources = HwlocTopologyFlags(uint64(1) << 2)
+)
+
+// HwlocTopologyDiscoverySupport Flags describing actual discovery support for this topology.
+type HwlocTopologyDiscoverySupport struct {
+	// Detecting the number of PU objects is supported.
+	PU uint8
+	// Detecting the number of NUMA nodes is supported.
+	Numa uint8
+	// Detecting the amount of memory in NUMA nodes is supported.
+	NumaMemory uint8
+	// Detecting and identifying PU objects that are not available to the current process is supported.
+	DisallowedPU uint8
+	// Detecting and identifying NUMA nodes that are not available to the current process is supported.
+	DisallowedNuma uint8
+}
+
+// HwlocTopologyCPUBindSupport Flags describing actual PU binding support for this topology.
+// A flag may be set even if the feature isn't supported in all cases
+// (e.g. binding to random sets of non-contiguous objects).
+type HwlocTopologyCPUBindSupport struct {
+	/** Binding the whole current process is supported.  */
+	SetThisProcCPUBind uint8
+	/** Getting the binding of the whole current process is supported.  */
+	GetThisProcCPUBind uint8
+	/** Binding a whole given process is supported.  */
+	SetProcCPUBind uint8
+	/** Getting the binding of a whole given process is supported.  */
+	GetProcCPUBind uint8
+	/** Binding the current thread only is supported.  */
+	SetThisThreadCPUBind uint8
+	/** Getting the binding of the current thread only is supported.  */
+	GetThisThreadCPUBind uint8
+	/** Binding a given thread only is supported.  */
+	SetThreadCPUBind uint8
+	/** Getting the binding of a given thread only is supported.  */
+	GetThreadCPUBind uint8
+	/** Getting the last processors where the whole current process ran is supported */
+	GetThisProcLastCPULocation uint8
+	/** Getting the last processors where a whole process ran is supported */
+	GetProcLastCPULocation uint8
+	/** Getting the last processors where the current thread ran is supported */
+	GetThisThreadLastCPULocation uint8
+}
+
+// HwlocTopologyMemBindSupport Flags describing actual memory binding support for this topology.
+// A flag may be set even if the feature isn't supported in all cases
+// (e.g. binding to random sets of non-contiguous objects).
+type HwlocTopologyMemBindSupport struct {
+}
+
+// HwlocTopologySupport Set of flags describing actual support for this topology.
+// This is retrieved with hwloc_topology_get_support() and will be valid until
+// the topology object is destroyed.  Note: the values are correct only after discovery.
+type HwlocTopologySupport struct {
+	discovery *HwlocTopologyDiscoverySupport
+	cpubind   *HwlocTopologyCPUBindSupport
+	membind   *HwlocTopologyMemBindSupport
 }
