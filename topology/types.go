@@ -312,10 +312,10 @@ type HwlocObject struct {
 	IOFirstChild     *HwlocObject
 	MiscArity        uint
 	MiscFirstChild   *HwlocObject
-	CPUSet           HwlocCPUSet
-	CompleteCPUSet   HwlocCPUSet
-	NodeSet          HwlocNodeSet
-	CompleteNodeSet  HwlocNodeSet
+	CPUSet           *HwlocCPUSet
+	CompleteCPUSet   *HwlocCPUSet
+	NodeSet          *HwlocNodeSet
+	CompleteNodeSet  *HwlocNodeSet
 	// Infos Array of stringified info type=name.
 	Infos map[string]string
 

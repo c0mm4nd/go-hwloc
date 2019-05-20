@@ -217,7 +217,13 @@ func (t *Topology) GetObjByType(ht HwlocObjType, idx uint) (*HwlocObject, error)
 		TotalMemory:  uint64(obj.total_memory),
 		Depth:        int(obj.depth),
 		LogicalIndex: uint(obj.logical_index),
-		private:      obj,
+		CPUSet: &HwlocCPUSet{
+			hwloc_cpuset_t: obj.cpuset,
+		},
+		CompleteCPUSet:  &HwlocCPUSet{},
+		NodeSet:         &HwlocNodeSet{},
+		CompleteNodeSet: &HwlocNodeSet{},
+		private:         obj,
 	}
 	return ret, nil
 }

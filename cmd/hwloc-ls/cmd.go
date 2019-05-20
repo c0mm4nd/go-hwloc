@@ -85,6 +85,7 @@ func lstopo(opts lstopoOptions) error {
 				fmt.Printf("Memory: %s\n", s)
 			}
 		}
+		/* Find out cpuset this is connected to */
 		fmt.Printf("\n")
 	}
 	return nil
