@@ -1,0 +1,28 @@
+sudo: required
+dist: trusty
+language: go
+
+go:
+    - 1.6
+    - 1.7
+    - 1.8
+    - 1.9
+    - 1.10
+    - 1.11
+    - 1.12
+
+install:
+   - true
+
+before_script:
+
+script:
+   - cd ${TRAVIS_BUILD_DIR}
+   - cd hwloc
+   - ./autogen.sh
+   - ./configure
+   - make
+   - make install
+   - cd ../
+   - make
+   - hack/verify-gofmt.sh
