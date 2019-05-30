@@ -63,7 +63,7 @@ func lstopo(opts lstopoOptions) error {
 		s, _ := obj.GetInfo("Backend")
 		//fmt.Printf("Info: %s\n", s)
 		if s == "CUDA" {
-			// This is a CUDA device
+			// TODO This is a CUDA device
 		} else if s == "OpenCL" {
 			// This is an OpenCL device
 			platformid, err := strconv.Atoi(obj.Name[len("opencl") : len("opencl")+1])
@@ -85,7 +85,24 @@ func lstopo(opts lstopoOptions) error {
 				fmt.Printf("Memory: %s\n", s)
 			}
 		}
+		for {
+			if obj == nil {
+				break
+			}
+			if obj.CPUSet == nil {
+				break
+			} else {
+				iz, _ := obj.CPUSet.IsZero()
+				if iz {
+					break
+				}
+			}
+			obj = obj.Parent
+		}
 		/* Find out cpuset this is connected to */
+		if obj != nil {
+			// TODO fmt.Printf
+		}
 		fmt.Printf("\n")
 	}
 	return nil

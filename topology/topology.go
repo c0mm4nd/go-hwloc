@@ -210,16 +210,14 @@ func (t *Topology) GetObjByDepth(depth int, idx uint) (*HwlocObject, error) {
 func (t *Topology) GetObjByType(ht HwlocObjType, idx uint) (*HwlocObject, error) {
 	obj := C.hwloc_get_obj_by_type(t.hwloc_topology, C.hwloc_obj_type_t(ht), C.uint(idx))
 	ret := &HwlocObject{
-		Type:         HwlocObjType(obj._type),
-		SubType:      C.GoString(obj.subtype),
-		OSIndex:      uint(obj.os_index),
-		Name:         C.GoString(obj.name),
-		TotalMemory:  uint64(obj.total_memory),
-		Depth:        int(obj.depth),
-		LogicalIndex: uint(obj.logical_index),
-		CPUSet: &HwlocCPUSet{
-			hwloc_cpuset_t: obj.cpuset,
-		},
+		Type:            HwlocObjType(obj._type),
+		SubType:         C.GoString(obj.subtype),
+		OSIndex:         uint(obj.os_index),
+		Name:            C.GoString(obj.name),
+		TotalMemory:     uint64(obj.total_memory),
+		Depth:           int(obj.depth),
+		LogicalIndex:    uint(obj.logical_index),
+		CPUSet:          NewCPUSet(obj.cpuset),
 		CompleteCPUSet:  &HwlocCPUSet{},
 		NodeSet:         &HwlocNodeSet{},
 		CompleteNodeSet: &HwlocNodeSet{},
@@ -238,7 +236,7 @@ func (t *Topology) Destroy() {
  * \return -1 with errno set to EXDEV if the binding cannot be enforced
  */
 func (t *Topology) SetCPUBind(set HwlocCPUSet, flags int) error {
-	C.hwloc_set_cpubind(t.hwloc_topology, set.hwloc_cpuset_t, C.int(flags))
+	C.hwloc_set_cpubind(t.hwloc_topology, set.hwloc_cpuset_t(), C.int(flags))
 	return nil
 }
 
@@ -248,11 +246,9 @@ func (t *Topology) SetCPUBind(set HwlocCPUSet, flags int) error {
  * flags) was last bound to.
  */
 func (t *Topology) GetCPUBind(flags int) (HwlocCPUSet, error) {
-	var set HwlocCPUSet
-	set.hwloc_cpuset_t = C.hwloc_bitmap_alloc()
-	C.hwloc_get_cpubind(t.hwloc_topology, set.hwloc_cpuset_t, C.int(flags))
-	// TODO convert hwloc_cpuset_t to BitMap
-	return set, nil
+	var set = NewCPUSet(nil)
+	C.hwloc_get_cpubind(t.hwloc_topology, set.hwloc_cpuset_t(), C.int(flags))
+	return *set, nil
 }
 
 // SetProcCPUBind Bind a process pid on cpus given in physical bitmap set.
@@ -266,7 +262,7 @@ func (t *Topology) GetCPUBind(flags int) (HwlocCPUSet, error) {
  * \note On non-Linux systems, ::HWLOC_CPUBIND_THREAD can not be used in \p flags.
  */
 func (t *Topology) SetProcCPUBind(pid HwlocPid, set HwlocCPUSet, flags int) error {
-	C.hwloc_set_proc_cpubind(t.hwloc_topology, C.hwloc_pid_t(pid), set.hwloc_cpuset_t, C.int(flags))
+	C.hwloc_set_proc_cpubind(t.hwloc_topology, C.hwloc_pid_t(pid), set.hwloc_cpuset_t(), C.int(flags))
 	return nil
 }
 
@@ -282,11 +278,9 @@ func (t *Topology) SetProcCPUBind(pid HwlocPid, set HwlocCPUSet, flags int) erro
  * \note On non-Linux systems, HWLOC_CPUBIND_THREAD can not be used in \p flags.
  */
 func (t *Topology) GetProcCPUBind(pid HwlocPid, flags int) (HwlocCPUSet, error) {
-	var set HwlocCPUSet
-	set.hwloc_cpuset_t = C.hwloc_bitmap_alloc()
-	C.hwloc_get_proc_cpubind(t.hwloc_topology, C.hwloc_pid_t(pid), set.hwloc_cpuset_t, C.int(flags))
-	// TODO convert hwloc_cpuset_t to BitMap
-	return set, nil
+	var set = NewCPUSet(nil)
+	C.hwloc_get_proc_cpubind(t.hwloc_topology, C.hwloc_pid_t(pid), set.hwloc_cpuset_t(), C.int(flags))
+	return *set, nil
 }
 
 //#ifdef hwloc_thread_t
@@ -325,11 +319,9 @@ func (t *Topology) GetProcCPUBind(pid HwlocPid, flags int) (HwlocCPUSet, error) 
  * whichever method is available on the underlying OS.
  */
 func (t *Topology) GetLastCPULocation(flags int) (HwlocCPUSet, error) {
-	var set HwlocCPUSet
-	set.hwloc_cpuset_t = C.hwloc_bitmap_alloc()
-	C.hwloc_get_last_cpu_location(t.hwloc_topology, set.hwloc_cpuset_t, C.int(flags))
-	// TODO convert hwloc_cpuset_t to BitMap
-	return set, nil
+	var set = NewCPUSet(nil)
+	C.hwloc_get_last_cpu_location(t.hwloc_topology, set.hwloc_cpuset_t(), C.int(flags))
+	return *set, nil
 }
 
 // GetProcLastCPULocation Get the last physical CPU where a process ran.
@@ -348,11 +340,9 @@ func (t *Topology) GetLastCPULocation(flags int) (HwlocCPUSet, error) {
  * \note On non-Linux systems, ::HWLOC_CPUBIND_THREAD can not be used in \p flags.
  */
 func (t *Topology) GetProcLastCPULocation(pid HwlocPid, flags int) (HwlocCPUSet, error) {
-	var set HwlocCPUSet
-	set.hwloc_cpuset_t = C.hwloc_bitmap_alloc()
-	C.hwloc_get_proc_last_cpu_location(t.hwloc_topology, C.hwloc_pid_t(pid), set.hwloc_cpuset_t, C.int(flags))
-	// TODO convert hwloc_cpuset_t to BitMap
-	return set, nil
+	var set = NewCPUSet(nil)
+	C.hwloc_get_proc_last_cpu_location(t.hwloc_topology, C.hwloc_pid_t(pid), set.hwloc_cpuset_t(), C.int(flags))
+	return *set, nil
 }
 
 // SetPid Change which process the topology is viewed from.

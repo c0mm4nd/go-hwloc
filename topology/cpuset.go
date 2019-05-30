@@ -3,7 +3,6 @@ package topology
 // #cgo LDFLAGS: -lhwloc
 // #include <hwloc.h>
 import "C"
-import "github.com/carmark/gohwloc/bitmap"
 
 // HwlocCPUSet A CPU set is a bitmap whose bits are set according to CPU physical OS indexes.
 /*
@@ -14,13 +13,25 @@ import "github.com/carmark/gohwloc/bitmap"
  * hwloc_get_pu_obj_by_os_index().
  */
 type HwlocCPUSet struct {
-	bitmap.BitMap
-	hwloc_cpuset_t C.hwloc_bitmap_t
+	BitMap
+}
+
+// NewCPUSet create a HwlocCPUSet instance based on hwloc_cpuset_t
+func NewCPUSet(cpuset C.hwloc_cpuset_t) *HwlocCPUSet {
+	var bm BitMap
+	if cpuset == nil {
+		bm = NewBitmap()
+	} else {
+		bm = NewFromBitmap(cpuset)
+	}
+	return &HwlocCPUSet{bm}
+}
+
+func (set HwlocCPUSet) hwloc_cpuset_t() C.hwloc_cpuset_t {
+	return set.BitMap.bm
 }
 
 // Destroy free the HwlocCPUSet object
 func (set HwlocCPUSet) Destroy() {
-	if set.hwloc_cpuset_t != nil {
-		C.hwloc_bitmap_free(set.hwloc_cpuset_t)
-	}
+	set.BitMap.Destroy()
 }
