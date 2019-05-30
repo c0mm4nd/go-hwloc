@@ -172,33 +172,13 @@ func (t *Topology) GetNbobjsByType(ht HwlocObjType) (int, error) {
 // Its type is ::HWLOC_OBJ_MACHINE.
 func (t *Topology) GetRootObj() (*HwlocObject, error) {
 	obj := C.hwloc_get_root_obj(t.hwloc_topology)
-	ret := &HwlocObject{
-		Type:         HwlocObjType(obj._type),
-		SubType:      C.GoString(obj.subtype),
-		OSIndex:      uint(obj.os_index),
-		Name:         C.GoString(obj.name),
-		TotalMemory:  uint64(obj.total_memory),
-		Depth:        int(obj.depth),
-		LogicalIndex: uint(obj.logical_index),
-		private:      obj,
-	}
-	return ret, nil
+	return NewHwlocObject(obj)
 }
 
 // GetObjByDepth Returns the topology object at logical index idx from depth
 func (t *Topology) GetObjByDepth(depth int, idx uint) (*HwlocObject, error) {
 	obj := C.hwloc_get_obj_by_depth(t.hwloc_topology, C.int(depth), C.uint(idx))
-	ret := &HwlocObject{
-		Type:         HwlocObjType(obj._type),
-		SubType:      C.GoString(obj.subtype),
-		OSIndex:      uint(obj.os_index),
-		Name:         C.GoString(obj.name),
-		TotalMemory:  uint64(obj.total_memory),
-		Depth:        int(obj.depth),
-		LogicalIndex: uint(obj.logical_index),
-		private:      obj,
-	}
-	return ret, nil
+	return NewHwlocObject(obj)
 }
 
 // GetObjByType Returns the topology object at logical index \p idx with type \p type
@@ -209,21 +189,7 @@ func (t *Topology) GetObjByDepth(depth int, idx uint) (*HwlocObject, error) {
  */
 func (t *Topology) GetObjByType(ht HwlocObjType, idx uint) (*HwlocObject, error) {
 	obj := C.hwloc_get_obj_by_type(t.hwloc_topology, C.hwloc_obj_type_t(ht), C.uint(idx))
-	ret := &HwlocObject{
-		Type:            HwlocObjType(obj._type),
-		SubType:         C.GoString(obj.subtype),
-		OSIndex:         uint(obj.os_index),
-		Name:            C.GoString(obj.name),
-		TotalMemory:     uint64(obj.total_memory),
-		Depth:           int(obj.depth),
-		LogicalIndex:    uint(obj.logical_index),
-		CPUSet:          NewCPUSet(obj.cpuset),
-		CompleteCPUSet:  &HwlocCPUSet{},
-		NodeSet:         &HwlocNodeSet{},
-		CompleteNodeSet: &HwlocNodeSet{},
-		private:         obj,
-	}
-	return ret, nil
+	return NewHwlocObject(obj)
 }
 
 func (t *Topology) Destroy() {

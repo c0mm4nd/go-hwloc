@@ -2,8 +2,103 @@ package topology
 
 // #cgo LDFLAGS: -lhwloc
 // #include <hwloc.h>
+/*
+uint64_t get_obj_local_memory(hwloc_obj_t obj) {
+	return obj->attr->numanode.local_memory;
+}
+
+uint32_t get_obj_page_types_len(hwloc_obj_t obj) {
+	return obj->attr->numanode.page_types_len;
+}
+
+struct hwloc_cache_attr_s get_obj_cache_attr(hwloc_obj_t obj) {
+	return obj->attr->cache;
+}
+
+struct hwloc_group_attr_s get_obj_group_attr(hwloc_obj_t obj) {
+	return obj->attr->group;
+}
+struct hwloc_pcidev_attr_s get_obj_pcidev_attr(hwloc_obj_t obj) {
+	return obj->attr->pcidev;
+}
+struct hwloc_bridge_attr_s get_obj_bridge_attr(hwloc_obj_t obj) {
+	return obj->attr->bridge;
+}
+struct hwloc_osdev_attr_s get_obj_osdev_attr(hwloc_obj_t obj) {
+	return obj->attr->osdev;
+}
+*/
 import "C"
 import "unsafe"
+
+// NewHwlocObject create a HwlocObject based on C.hwloc_obj_t
+func NewHwlocObject(obj C.hwloc_obj_t) (*HwlocObject, error) {
+	hobj := &HwlocObject{
+		Type:            HwlocObjType(obj._type),
+		SubType:         C.GoString(obj.subtype),
+		OSIndex:         uint(obj.os_index),
+		Name:            C.GoString(obj.name),
+		TotalMemory:     uint64(obj.total_memory),
+		Depth:           int(obj.depth),
+		LogicalIndex:    uint(obj.logical_index),
+		CPUSet:          NewCPUSet(obj.cpuset),
+		NextCousin:      &HwlocObject{},
+		PrevCousin:      &HwlocObject{},
+		Parent:          &HwlocObject{},
+		SiblingRank:     uint(obj.sibling_rank),
+		NextSibling:     &HwlocObject{},
+		PrevSibling:     &HwlocObject{},
+		CompleteCPUSet:  &HwlocCPUSet{},
+		NodeSet:         &HwlocNodeSet{},
+		CompleteNodeSet: &HwlocNodeSet{},
+		private:         obj,
+	}
+	if obj.attr != nil {
+		hobj.Attributes = &HwlocObjAttr{}
+		hobj.Attributes.NumaNode = &HwlocNumaNodeAttr{
+			LocalMemory:     uint64(C.get_obj_local_memory(obj)),
+			PageTypesLength: uint(C.get_obj_page_types_len(obj)),
+		}
+		cache := C.get_obj_cache_attr(obj)
+		hobj.Attributes.Cache = &HwlocCacheAttr{
+			Size:          uint64(cache.size),
+			Depth:         uint(cache.depth),
+			LineSize:      uint(cache.linesize),
+			Associativity: int(cache.associativity),
+			Type:          HwlocObjCacheType(cache._type),
+		}
+		group := C.get_obj_group_attr(obj)
+		hobj.Attributes.Group = &HwlocGroupAttr{
+			Depth:   uint(group.depth),
+			Kind:    uint(group.kind),
+			SubKind: uint(group.subkind),
+		}
+		pcidev := C.get_obj_pcidev_attr(obj)
+		hobj.Attributes.PCIDev = &HwlocPCIDevAttr{
+			Domain:      uint16(pcidev.domain),
+			Bus:         uint8(pcidev.bus),
+			Dev:         uint8(pcidev.dev),
+			Func:        uint8(pcidev._func),
+			ClassID:     uint16(pcidev.class_id),
+			VendorID:    uint16(pcidev.vendor_id),
+			DeviceID:    uint16(pcidev.device_id),
+			SubVendorID: uint16(pcidev.subvendor_id),
+			SubDeviceID: uint16(pcidev.subdevice_id),
+			Revision:    uint8(pcidev.revision),
+			LinkSpeed:   float32(pcidev.linkspeed),
+		}
+		bridge := C.get_obj_bridge_attr(obj)
+		hobj.Attributes.Bridge = &HwlocBridgeAttr{
+			UpstreamType:   HwlocObjBridgeType(bridge.upstream_type),
+			DownStreamType: HwlocObjBridgeType(bridge.downstream_type),
+			Depth:          uint(bridge.depth),
+		}
+		//Bridge: &HwlocBridgeAttr{},
+		osdev := C.get_obj_osdev_attr(obj)
+		hobj.Attributes.OSDevType = HwlocObjOSDevType(osdev._type)
+	}
+	return hobj, nil
+}
 
 // GetInfo Search the given key name in object infos and return the corresponding value.
 /*

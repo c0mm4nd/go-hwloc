@@ -213,17 +213,17 @@ type HwlocGroupAttr struct {
 
 // HwlocPCIDevAttr PCI Device specific Object Attributes
 type HwlocPCIDevAttr struct {
-	Domain      uint
-	Bus         string
-	Dev         string
-	Func        string
-	ClassID     uint
-	VednorID    uint
-	DeviceID    uint
-	SubVendorID uint
-	SubDeviceID uint
-	Revision    string
-	LinkSpeed   float64 // in GB/s
+	Domain      uint16
+	Bus         uint8
+	Dev         uint8
+	Func        uint8
+	ClassID     uint16
+	VendorID    uint16
+	DeviceID    uint16
+	SubVendorID uint16
+	SubDeviceID uint16
+	Revision    uint8
+	LinkSpeed   float32 // in GB/s
 }
 
 // HwlocBridgeAttr specific Object Attribues
