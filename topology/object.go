@@ -29,10 +29,15 @@ struct hwloc_osdev_attr_s get_obj_osdev_attr(hwloc_obj_t obj) {
 }
 */
 import "C"
-import "unsafe"
+import (
+	"unsafe"
+)
 
 // NewHwlocObject create a HwlocObject based on C.hwloc_obj_t
 func NewHwlocObject(obj C.hwloc_obj_t) (*HwlocObject, error) {
+	if obj == nil {
+		return nil, nil
+	}
 	hobj := &HwlocObject{
 		Type:            HwlocObjType(obj._type),
 		SubType:         C.GoString(obj.subtype),
@@ -92,10 +97,13 @@ func NewHwlocObject(obj C.hwloc_obj_t) (*HwlocObject, error) {
 			UpstreamType:   HwlocObjBridgeType(bridge.upstream_type),
 			DownStreamType: HwlocObjBridgeType(bridge.downstream_type),
 			Depth:          uint(bridge.depth),
+			// TODO: UpstreamPCI, DownStreamPCIDomain, DownStreamPCISecondaryBus, DownStreamPCISubordinateBus
 		}
-		//Bridge: &HwlocBridgeAttr{},
 		osdev := C.get_obj_osdev_attr(obj)
 		hobj.Attributes.OSDevType = HwlocObjOSDevType(osdev._type)
+	}
+	if po := obj.parent; po != nil {
+		hobj.Parent, _ = NewHwlocObject(po)
 	}
 	return hobj, nil
 }
@@ -142,4 +150,50 @@ func (o *HwlocObject) AddInfo(name, value string) error {
 	ret := C.hwloc_obj_add_info(o.hwloc_obj_t(), cname, cvalue)
 	_ = ret
 	return nil
+}
+
+// String Return a constant stringified object type.
+// This function is the basic way to convert a generic type into a string.
+// The output string may be parsed back by hwloc_type_sscanf().
+func (t HwlocObjType) String() string {
+	switch t {
+	case HwlocObjMachine:
+		return "Machine"
+	case HwlocObjPackage:
+		return "Package"
+	case HwlocObjCore:
+		return "Core"
+	case HwlocObjPU:
+		return "PU"
+	case HwlocObjL1Cache:
+		return "L1Cache"
+	case HwlocObjL2Cache:
+		return "L2Cache"
+	case HwlocObjL3Cache:
+		return "L3Cache"
+	case HwlocObjL4Cache:
+		return "L4Cache"
+	case HwlocObjL5Cache:
+		return "L5Cache"
+	case HwlocObjL1ICache:
+		return "L1iCache"
+	case HwlocObjL2ICache:
+		return "L2iCache"
+	case HwlocObjL3ICache:
+		return "L3iCache"
+	case HwlocObjGroup:
+		return "Group"
+	case HwlocObjNumaNode:
+		return "NUMANode"
+	case HwlocObjBridge:
+		return "Bridge"
+	case HwlocObjPCIDevice:
+		return "PCIDev"
+	case HwlocObjOSDevice:
+		return "OSDev"
+	case HwlocObjMisc:
+		return "Misc"
+	default:
+		return "Unknown"
+	}
 }

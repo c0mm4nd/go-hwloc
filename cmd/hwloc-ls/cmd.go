@@ -86,22 +86,21 @@ func lstopo(opts lstopoOptions) error {
 			}
 		}
 		for {
-			if obj == nil {
-				break
-			}
-			if obj.CPUSet == nil {
-				break
-			} else {
-				iz, _ := obj.CPUSet.IsZero()
-				if iz {
+			if obj != nil {
+				if obj.CPUSet == nil {
+					obj = obj.Parent
+				} else if iz, _ := obj.CPUSet.IsZero(); iz {
+					obj = obj.Parent
+				} else {
 					break
 				}
+			} else {
+				break
 			}
-			obj = obj.Parent
 		}
 		/* Find out cpuset this is connected to */
 		if obj != nil {
-			// TODO fmt.Printf
+			fmt.Printf("Location: %v P#%d\n", obj.Type.String(), obj.OSIndex)
 		}
 		fmt.Printf("\n")
 	}

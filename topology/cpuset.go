@@ -18,13 +18,10 @@ type HwlocCPUSet struct {
 
 // NewCPUSet create a HwlocCPUSet instance based on hwloc_cpuset_t
 func NewCPUSet(cpuset C.hwloc_cpuset_t) *HwlocCPUSet {
-	var bm BitMap
-	if cpuset == nil {
-		bm = NewBitmap()
-	} else {
-		bm = NewFromBitmap(cpuset)
+	var bm BitMap = NewBitmap(cpuset)
+	return &HwlocCPUSet{
+		BitMap: bm,
 	}
-	return &HwlocCPUSet{bm}
 }
 
 func (set HwlocCPUSet) hwloc_cpuset_t() C.hwloc_cpuset_t {

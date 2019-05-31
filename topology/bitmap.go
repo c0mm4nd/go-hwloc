@@ -2,6 +2,7 @@ package topology
 
 // #cgo LDFLAGS: -lhwloc
 // #include <hwloc.h>
+// #include <hwloc/bitmap.h>
 import "C"
 
 // BitMap is a struct containing a slice of bytes,
@@ -10,22 +11,16 @@ type BitMap struct {
 	bm C.hwloc_bitmap_t
 }
 
-// NewBitmap  returns a BitMap. It requires a size. A bitmap with a size of
+// NewBitmap returns a BitMap. It requires a size. A bitmap with a size of
 // eight or less will be one byte in size, and so on.
-func NewBitmap() BitMap {
-	bm := BitMap{
-		bm: C.hwloc_bitmap_alloc(),
-	}
-	return bm
-}
-
-// NewFromBitmap returns a BitMap. It requires a size. A bitmap with a size of
-// eight or less will be one byte in size, and so on.
-func NewFromBitmap(set C.hwloc_bitmap_t) BitMap {
-	bm := BitMap{
+func NewBitmap(set C.hwloc_bitmap_t) BitMap {
+	b := BitMap{
 		bm: set,
 	}
-	return bm
+	if set == nil {
+		b.bm = C.hwloc_bitmap_alloc()
+	}
+	return b
 }
 
 // Destroy free the BitMap
@@ -78,5 +73,5 @@ func (b BitMap) ToString() (string, error) {
 }
 
 func FromString(input string) (BitMap, error) {
-	return NewBitmap(), nil
+	return NewBitmap(nil), nil
 }
