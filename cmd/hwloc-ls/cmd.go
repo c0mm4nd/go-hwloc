@@ -63,7 +63,35 @@ func lstopo(opts lstopoOptions) error {
 		s, _ := obj.GetInfo("Backend")
 		//fmt.Printf("Info: %s\n", s)
 		if s == "CUDA" {
-			// TODO This is a CUDA device
+			// This is a CUDA device
+			devid, err := strconv.Atoi(obj.Name[len("cuda"):])
+			if err != nil {
+				return err
+			}
+			fmt.Printf("CUDA device %d\n", devid)
+			s, _ = obj.GetInfo("GPUModel")
+			if s != "" {
+				fmt.Printf("Model: %s\n", s)
+			}
+			s, _ = obj.GetInfo("CUDAGlobalMemorySize")
+			if s != "" {
+				fmt.Printf("Memory: %s\n", s)
+			}
+			s, _ = obj.GetInfo("CUDAMultiProcessors")
+			if s != "" {
+				mp, err := strconv.Atoi(s)
+				if err != nil {
+					return err
+				}
+				s, _ = obj.GetInfo("CUDACoresPerMP")
+				if s != "" {
+					mp_cores, err := strconv.Atoi(s)
+					if err != nil {
+						return err
+					}
+					fmt.Printf("Cores: %d\n", mp*mp_cores)
+				}
+			}
 		} else if s == "OpenCL" {
 			// This is an OpenCL device
 			platformid, err := strconv.Atoi(obj.Name[len("opencl") : len("opencl")+1])
