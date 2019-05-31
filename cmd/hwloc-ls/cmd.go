@@ -101,6 +101,7 @@ func lstopo(opts lstopoOptions) error {
 		/* Find out cpuset this is connected to */
 		if obj != nil {
 			fmt.Printf("Location: %v P#%d\n", obj.Type.String(), obj.OSIndex)
+			fmt.Printf("Cpuset: %s\n", obj.CPUSet.String())
 		}
 		fmt.Printf("\n")
 	}

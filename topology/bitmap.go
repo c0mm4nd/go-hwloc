@@ -4,6 +4,7 @@ package topology
 // #include <hwloc.h>
 // #include <hwloc/bitmap.h>
 import "C"
+import "unsafe"
 
 // BitMap is a struct containing a slice of bytes,
 // being used as a bitmap.
@@ -68,8 +69,12 @@ func (b BitMap) IsZero() (bool, error) {
 	return false, nil
 }
 
-func (b BitMap) ToString() (string, error) {
-	return "", nil
+func (b BitMap) String() string {
+	var bitmap = C.CString("")
+	defer C.free(unsafe.Pointer(bitmap))
+	C.hwloc_bitmap_asprintf(&bitmap, b.bm)
+	var res = C.GoString(bitmap)
+	return res
 }
 
 func FromString(input string) (BitMap, error) {
