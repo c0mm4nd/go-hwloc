@@ -660,3 +660,42 @@ const (
 	// since they are likely important.
 	HwlocTypeFilterKeepImportant HwlocTypeFilter = C.HWLOC_TYPE_FILTER_KEEP_IMPORTANT
 )
+
+// HwlocRestrictFlags Flags to be given to hwloc_topology_restrict().
+type HwlocRestrictFlags int
+
+const (
+	// HwlocRestrictFlagRemoveCPULess Remove all objects that became CPU-less.
+	// By default, only objects that contain no PU and no memory are removed.
+	HwlocRestrictFlagRemoveCPULess HwlocRestrictFlags = C.HWLOC_RESTRICT_FLAG_REMOVE_CPULESS
+	// HwlocRestrictFlagByNodeSet Restrict by nodeset instead of CPU set.
+	// Only keep objects whose nodeset is included or partially included in the given set.
+	// This flag may not be used with ::HWLOC_RESTRICT_FLAG_BYNODESET.
+	HwlocRestrictFlagByNodeSet HwlocRestrictFlags = C.HWLOC_RESTRICT_FLAG_BYNODESET
+	// HwlocRestrictFlagRemoveMemLess Remove all objects that became Memory-less.
+	// By default, only objects that contain no PU and no memory are removed.
+	// This flag may only be used with ::HWLOC_RESTRICT_FLAG_BYNODESET.
+	HwlocRestrictFlagRemoveMemLess HwlocRestrictFlags = C.HWLOC_RESTRICT_FLAG_REMOVE_MEMLESS
+	// HwlocRestrictFlagAdaptMisc Move Misc objects to ancestors if their parents are removed during restriction.
+	// If this flag is not set, Misc objects are removed when their parents are removed.
+	HwlocRestrictFlagAdaptMisc HwlocRestrictFlags = C.HWLOC_RESTRICT_FLAG_ADAPT_MISC
+	// HwlocRestrictFlagAdaptIO Move I/O objects to ancestors if their parents are removed during restriction.
+	// If this flag is not set, I/O devices and bridges are removed when their parents are removed.
+	HwlocRestrictFlagAdaptIO HwlocRestrictFlags = C.HWLOC_RESTRICT_FLAG_ADAPT_IO
+)
+
+// HwlocAllowFlags Flags to be given to hwloc_topology_allow().
+type HwlocAllowFlags int
+
+const (
+	// HwlocAllowFlagAll Mark all objects as allowed in the topology.
+	//  cpuset and  nođeset given to hwloc_topology_allow() must be NULL
+	HwlocAllowFlagAll HwlocAllowFlags = C.HWLOC_ALLOW_FLAG_ALL
+	// HwlocAllowFlagLocalRestrictions Only allow objects that are available to the current process.
+	// The topology must have ::HWLOC_TOPOLOGY_FLAG_IS_THISSYSTEM so that the set
+	// of available resources can actually be retrieved from the operating system.
+	// cpuset and nođeset given to hwloc_topology_allow() must be NULL.
+	HwlocAllowFlagLocalRestrictions HwlocAllowFlags = C.HWLOC_ALLOW_FLAG_LOCAL_RESTRICTIONS
+	// HwlocAllowFlagCustom Allow a custom set of objects, given to hwloc_topology_allow() as cpuset and/or nodeset parameters.
+	HwlocAllowFlagCustom HwlocAllowFlags = C.HWLOC_ALLOW_FLAG_CUSTOM
+)

@@ -4,7 +4,12 @@ package topology
 // #cgo LDFLAGS: -lhwloc
 // #include <hwloc.h>
 import "C"
-import "unsafe"
+import (
+	"errors"
+	"unsafe"
+)
+
+var NotImplementError = errors.New("not implemented")
 
 type Topology struct {
 	hwloc_topology C.hwloc_topology_t
@@ -541,4 +546,124 @@ func (t *Topology) SetUserData(data unsafe.Pointer) error {
 func (t *Topology) GetUserData() (unsafe.Pointer, error) {
 	data := C.hwloc_topology_get_userdata(t.hwloc_topology)
 	return data, nil
+}
+
+// SetRestrict Restrict the topology to the given CPU set or nodeset.
+// Topology \p topology is modified so as to remove all objects that
+// are not included (or partially included) in the CPU set \p set.
+// All objects CPU and node sets are restricted accordingly.
+// If ::HWLOC_RESTRICT_FLAG_BYNODESET is passed in \p flags,
+// set is considered a nodeset instead of a CPU set.
+// flags is a OR'ed set of ::hwloc_restrict_flags_e.
+// This call may not be reverted by restricting back to a larger
+// set. Once dropped during restriction, objects may not be brought
+// back, except by loading another topology with hwloc_topology_load().
+// return 0 on success.
+// return -1 with errno set to EINVAL if the input set is invalid.
+// The topology is not modified in this case.
+// return -1 with errno set to ENOMEM on failure to allocate internal data.
+// The topology is reinitialized in this case. It should be either
+// destroyed with hwloc_topology_destroy() or configured and loaded again.
+func (t *Topology) SetRestrict(bitmap BitMap, flags uint32) error {
+	C.hwloc_topology_restrict(t.hwloc_topology, bitmap.bm, C.ulong(flags))
+	return nil
+}
+
+// SetAllow Change the sets of allowed PUs and NUMA nodes in the topology.
+// This function only works if the ::HWLOC_TOPOLOGY_FLAG_INCLUDE_DISALLOWED
+// was set on the topology. It does not modify any object, it only changes
+// the sets returned by hwloc_topology_get_allowed_cpuset() and
+// hwloc_topology_get_allowed_nodeset().
+// It is notably useful when importing a topology from another process
+// running in a different Linux Cgroup.
+// flags must be set to one flag among ::hwloc_allow_flags_e.
+// Removing objects from a topology should rather be performed with hwloc_topology_restrict().
+func (t *Topology) SetAllow(cpuset HwlocCPUSet, nodeset HwlocNodeSet, flags uint32) error {
+	return NotImplementError
+}
+
+// InsertMiscObject Add a MISC object as a leaf of the topology
+/*
+ * A new MISC object will be created and inserted into the topology at the
+ * position given by parent. It is appended to the list of existing Misc children,
+ * without ever adding any intermediate hierarchy level. This is useful for
+ * annotating the topology without actually changing the hierarchy.
+ *
+ * \p name is supposed to be unique across all Misc objects in the topology.
+ * It will be duplicated to setup the new object attributes.
+ *
+ * The new leaf object will not have any \p cpuset.
+ *
+ * \return the newly-created object
+ *
+ * \return \c NULL on error.
+ *
+ * \return \c NULL if Misc objects are filtered-out of the topology (::HWLOC_TYPE_FILTER_KEEP_NONE).
+ *
+ * \note If \p name contains some non-printable characters, they will
+ * be dropped when exporting to XML, see hwloc_topology_export_xml() in hwloc/export.h.
+ */
+func (t *Topology) InsertMiscObject(parent *HwlocObject, name string) error {
+	return NotImplementError
+}
+
+// AllocGroupObject Allocate a Group object to insert later with hwloc_topology_insert_group_object().
+/*
+ * This function returns a new Group object.
+ * The caller should (at least) initialize its sets before inserting the object.
+ * See hwloc_topology_insert_group_object().
+ *
+ * The \p subtype object attribute may be set to display something else
+ * than "Group" as the type name for this object in lstopo.
+ * Custom name/value info pairs may be added with hwloc_obj_add_info() after
+ * insertion.
+ *
+ * The \p kind group attribute should be 0. The \p subkind group attribute may
+ * be set to identify multiple Groups of the same level.
+ *
+ * It is recommended not to set any other object attribute before insertion,
+ * since the Group may get discarded during insertion.
+ *
+ * The object will be destroyed if passed to hwloc_topology_insert_group_object()
+ * without any set defined.
+ */
+func (t *Topology) AllocGroupObject() (*HwlocObject, error) {
+	return nil, NotImplementError
+}
+
+// InsertGroupObject Add more structure to the topology by adding an intermediate Group
+/*
+ * The caller should first allocate a new Group object with hwloc_topology_alloc_group_object().
+ * Then it must setup at least one of its CPU or node sets to specify
+ * the final location of the Group in the topology.
+ * Then the object can be passed to this function for actual insertion in the topology.
+ *
+ * Either the cpuset or nodeset field (or both, if compatible) must be set
+ * to a non-empty bitmap. The complete_cpuset or complete_nodeset may be set
+ * instead if inserting with respect to the complete topology
+ * (including disallowed, offline or unknown objects).
+ *
+ * It grouping several objects, hwloc_obj_add_other_obj_sets() is an easy way
+ * to build the Group sets iteratively.
+ *
+ * These sets cannot be larger than the current topology, or they would get
+ * restricted silently.
+ *
+ * The core will setup the other sets after actual insertion.
+ *
+ * \return The inserted object if it was properly inserted.
+ *
+ * \return An existing object if the Group was discarded because the topology already
+ * contained an object at the same location (the Group did not add any locality information).
+ * Any name/info key pair set before inserting is appended to the existing object.
+ *
+ * \return \c NULL if the insertion failed because of conflicting sets in topology tree.
+ *
+ * \return \c NULL if Group objects are filtered-out of the topology (::HWLOC_TYPE_FILTER_KEEP_NONE).
+ *
+ * \return \c NULL if the object was discarded because no set was initialized in the Group
+ * before insert, or all of them were empty.
+ */
+func (t *Topology) InsertGroupObject(group *HwlocObject) error {
+	return NotImplementError
 }
