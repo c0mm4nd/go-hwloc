@@ -624,3 +624,39 @@ type HwlocTopologySupport struct {
 	cpubind   *HwlocTopologyCPUBindSupport
 	membind   *HwlocTopologyMemBindSupport
 }
+
+// HwlocTypeFilter Type filtering flags.
+// By default, most objects are kept (::HWLOC_TYPE_FILTER_KEEP_ALL).
+// Instruction caches, I/O and Misc objects are ignored by default (::HWLOC_TYPE_FILTER_KEEP_NONE).
+// Group levels are ignored unless they bring structure (::HWLOC_TYPE_FILTER_KEEP_STRUCTURE).
+// Note that group objects are also ignored individually (without the entire level)
+// when they do not bring structure.
+type HwlocTypeFilter int
+
+const (
+	// HwlocTypeFilterKeepAll Keep all objects of this type.
+	// Cannot be set for ::HWLOC_OBJ_GROUP (groups are designed only to add more structure to the topology).
+	HwlocTypeFilterKeepAll HwlocTypeFilter = C.HWLOC_TYPE_FILTER_KEEP_ALL
+	// HwlocTypeFilterKeepNone gnore all objects of this type.
+	// The bottom-level type ::HWLOC_OBJ_PU, the ::HWLOC_OBJ_NUMANODE type, and
+	// the top-level type ::HWLOC_OBJ_MACHINE may not be ignored.
+	HwlocTypeFilterKeepNone HwlocTypeFilter = C.HWLOC_TYPE_FILTER_KEEP_NONE
+	// HwlocTypeFilterKeepStructure nly ignore objects if their entire level does not bring any structure.
+	// Keep the entire level of objects if at least one of these objects adds
+	// structure to the topology. An object brings structure when it has multiple
+	// children and it is not the only child of its parent.
+	// If all objects in the level are the only child of their parent, and if none
+	// of them has multiple children, the entire level is removed.
+	// Cannot be set for I/O and Misc objects since the topology structure does not matter there.
+	HwlocTypeFilterKeepStructure HwlocTypeFilter = C.HWLOC_TYPE_FILTER_KEEP_STRUCTURE
+	// HwlocTypeFilterKeepImportant Only keep likely-important objects of the given type.
+	// It is only useful for I/O object types.
+	// For ::HWLOC_OBJ_PCI_DEVICE and ::HWLOC_OBJ_OS_DEVICE, it means that only objects
+	// of major/common kinds are kept (storage, network, OpenFabrics, Intel MICs, CUDA,
+	// OpenCL, NVML, and displays).
+	// Also, only OS devices directly attached on PCI (e.g. no USB) are reported.
+	// For ::HWLOC_OBJ_BRIDGE, it means that bridges are kept only if they have children.
+	// This flag equivalent to ::HWLOC_TYPE_FILTER_KEEP_ALL for Normal, Memory and Misc types
+	// since they are likely important.
+	HwlocTypeFilterKeepImportant HwlocTypeFilter = C.HWLOC_TYPE_FILTER_KEEP_IMPORTANT
+)

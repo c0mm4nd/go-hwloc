@@ -469,21 +469,76 @@ func (t *Topology) IsThisSystem() (bool, error) {
 }
 
 // GetSupport Retrieve the topology support.
-/*
- * Each flag indicates whether a feature is supported.
- * If set to 0, the feature is not supported.
- * If set to 1, the feature is supported, but the corresponding
- * call may still fail in some corner cases.
- *
- * These features are also listed by hwloc-info \--support
- */
+// Each flag indicates whether a feature is supported.
+// If set to 0, the feature is not supported.
+// If set to 1, the feature is supported, but the corresponding
+// call may still fail in some corner cases.
+// These features are also listed by hwloc-info \--support
 func (t *Topology) GetSupport() (*HwlocTopologySupport, error) {
 	s := C.hwloc_topology_get_support(t.hwloc_topology)
 	return &HwlocTopologySupport{
 		discovery: &HwlocTopologyDiscoverySupport{
 			PU: uint8(s.discovery.pu),
 		},
+		// TODO
 		cpubind: &HwlocTopologyCPUBindSupport{},
 		membind: &HwlocTopologyMemBindSupport{},
 	}, nil
+}
+
+// SetTypeFilter Set the filtering for the given object type.
+func (t *Topology) SetTypeFilter(ot HwlocObjType, f HwlocTypeFilter) error {
+	C.hwloc_topology_set_type_filter(t.hwloc_topology, C.hwloc_obj_type_t(ot), C.enum_hwloc_type_filter_e(f))
+	return nil
+}
+
+// GetTypeFilter Get the current filtering for the given object type.
+func (t *Topology) GetTypeFilter(ot HwlocObjType) (HwlocTypeFilter, error) {
+	var filter C.enum_hwloc_type_filter_e
+	C.hwloc_topology_get_type_filter(t.hwloc_topology, C.hwloc_obj_type_t(ot), &filter)
+	return HwlocTypeFilter(filter), nil
+}
+
+// SetAllTypeFilter Set the filtering for all object types.
+// If some types do not support this filtering, they are silently ignored.
+func (t *Topology) SetAllTypeFilter(f HwlocTypeFilter) error {
+	C.hwloc_topology_set_all_types_filter(t.hwloc_topology, C.enum_hwloc_type_filter_e(f))
+	return nil
+}
+
+// SetCacheTypeFilter Set the filtering for all cache object types.
+func (t *Topology) SetCacheTypeFilter(f HwlocTypeFilter) error {
+	C.hwloc_topology_set_cache_types_filter(t.hwloc_topology, C.enum_hwloc_type_filter_e(f))
+	return nil
+}
+
+// SetICacheTypeFilter Set the filtering for all instruction cache object types.
+func (t *Topology) SetICacheTypeFilter(f HwlocTypeFilter) error {
+	C.hwloc_topology_set_icache_types_filter(t.hwloc_topology, C.enum_hwloc_type_filter_e(f))
+	return nil
+}
+
+// SetIOTypeFilter Set the filtering for all I/O object types.
+func (t *Topology) SetIOTypeFilter(f HwlocTypeFilter) error {
+	C.hwloc_topology_set_io_types_filter(t.hwloc_topology, C.enum_hwloc_type_filter_e(f))
+	return nil
+}
+
+// SetUserData Set the topology-specific userdata pointer.
+// Each topology may store one application-given private data pointer.
+// It is initialized to \c NULL.
+// hwloc will never modify it.
+// Use it as you wish, after hwloc_topology_init() and until hwloc_topolog_destroy().
+// This pointer is not exported to XML.
+func (t *Topology) SetUserData(data unsafe.Pointer) error {
+	C.hwloc_topology_set_userdata(t.hwloc_topology, data)
+	return nil
+}
+
+// GetUserData Retrieve the topology-specific userdata pointer.
+// Retrieve the application-given private data pointer that was
+// previously set with hwloc_topology_set_userdata().
+func (t *Topology) GetUserData() (unsafe.Pointer, error) {
+	data := C.hwloc_topology_get_userdata(t.hwloc_topology)
+	return data, nil
 }
