@@ -3,6 +3,24 @@
 # GoHwloc
 
 ## Introduction
+Golang binding for hwloc
+
+## Installation
+
+```
+$ git clone
+$ cd gohwloc/hwloc
+$ ./autogen.sh
+$ ./configure
+$ make
+$ make install
+$ cd ..
+$ make
+```
+
+# Hwloc
+
+## Introduction
 
 The Hardware Locality (hwloc) software project aims at easing the process of
 discovering hardware resources in parallel architectures. It offers
