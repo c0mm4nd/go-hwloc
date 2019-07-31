@@ -22,7 +22,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/carmark/gohwloc/topology"
+	"github.com/gpucloud/gohwloc/topology"
 )
 
 type lstopoOptions struct {

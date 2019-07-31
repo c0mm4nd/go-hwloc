@@ -3,7 +3,7 @@ package topology
 // #cgo LDFLAGS: -lhwloc
 // #include <hwloc.h>
 import "C"
-import "github.com/carmark/gohwloc/bitmap"
+import "github.com/gpucloud/gohwloc/bitmap"
 
 // HwlocNodeSet A node set is a bitmap whose bits are set according to NUMA memory node physical OS indexes.
 /*
