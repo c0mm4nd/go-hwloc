@@ -104,7 +104,7 @@ func NewHwlocObject(obj C.hwloc_obj_t) (*HwlocObject, error) {
 	}
 	for tmp := obj.io_first_child; tmp != nil; tmp = tmp.next_sibling {
 		c, _ := NewHwlocObject(tmp)
-		c.parent = hobj
+		c.Parent = hobj
 		hobj.Children = append(hobj.Children, c)
 	}
 	return hobj, nil
