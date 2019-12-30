@@ -1,7 +1,7 @@
 package hwloc
 
 //#cgo CFLAGS: -I./hwloc/include
-//#cgo LDFLAGS: -lhwloc
+//#cgo LDFLAGS: -L/usr/local/lib -lhwloc
 // #include <hwloc.h>
 // #include <hwloc/bitmap.h>
 import "C"
