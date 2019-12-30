@@ -22,7 +22,7 @@ func NewTopology() (*Topology, error) {
 	C.hwloc_topology_init(topology) // initialization
 
 	return &Topology{
-		hwloc_topology: &topology,
+		hwloc_topology: *topology,
 	}, nil
 }
 
