@@ -1,14 +1,16 @@
 language: go
 
 go:
-    - 1.12
-    - 1.13
+  - 1.12
+  - 1.13
+
+before_script:
+  - cd ${TRAVIS_BUILD_DIR}
+  - cd hwloc
+  - ./autogen.sh
+  - ./configure
+  - make
 
 script:
-   - cd ${TRAVIS_BUILD_DIR}
-   - cd hwloc
-   - ./autogen.sh
-   - ./configure
-   - make
-   - cd ../
-   - go test ./...
+  - cd ${TRAVIS_BUILD_DIR}
+  - go test ./...
