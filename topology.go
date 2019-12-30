@@ -2,7 +2,7 @@ package hwloc
 
 //#cgo CFLAGS: -g -Wall
 //#cgo CFLAGS: -I./hwloc/include
-//#cgo LDFLAGS: -L${SRCDIR}/hwloc/hwloc/.libs -lhwloc
+//#cgo LDFLAGS: -lhwloc
 // #include <stdint.h>
 // #include <hwloc.h>
 import "C"
