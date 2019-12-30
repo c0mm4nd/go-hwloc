@@ -1,6 +1,5 @@
 package hwloc
 
-//#cgo CFLAGS: -g -Wall
 //#cgo LDFLAGS: -lhwloc
 // #include <stdint.h>
 // #include <hwloc.h>
