@@ -18,7 +18,7 @@ type Topology struct {
 }
 
 func NewTopology() (*Topology, error) {
-	var topology C.hwloc_topology_t
+	var topology *C.hwloc_topology_t
 	C.hwloc_topology_init(topology) // initialization
 
 	return &Topology{
