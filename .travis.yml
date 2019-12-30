@@ -1,14 +1,16 @@
+sudo: required
 language: go
 
 go:
   - 1.12
   - 1.13
 
-before_install:
+install:
   - cd hwloc
   - ./autogen.sh
   - ./configure
   - make
+  - sudo make install
 
 script:
   - cd ${TRAVIS_BUILD_DIR}
