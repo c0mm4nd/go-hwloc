@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"strconv"
 
-	hwloc "github.com/maoxs2/gohwloc"
+	"github.com/maoxs2/go-hwloc"
 	"github.com/spf13/cobra"
 )
 
@@ -53,10 +53,10 @@ func lstopo(opts lstopoOptions) error {
 	t, _ := hwloc.NewTopology()
 	t.Load()
 	defer t.Destroy()
-	n, _ := t.GetNbobjsByType(topology.HwlocObjOSDevice)
+	n, _ := t.GetNbobjsByType(hwloc.HwlocObjOSDevice)
 	fmt.Printf("t.GetNbobjsByType: %d\n", n)
 	for i := 0; i < n; i++ {
-		obj, _ := t.GetObjByType(topology.HwlocObjOSDevice, uint(i))
+		obj, _ := t.GetObjByType(hwloc.HwlocObjOSDevice, uint(i))
 		fmt.Printf("%s:\n", obj.Name)
 		// obj->subtype also contains CUDA or OpenCL since v2.0
 		s, _ := obj.GetInfo("Backend")
