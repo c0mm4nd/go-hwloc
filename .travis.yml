@@ -1,15 +1,8 @@
-sudo: required
-dist: trusty
 language: go
 
 go:
-    - 1.11
     - 1.12
-
-install:
-   - true
-
-before_script:
+    - 1.13
 
 script:
    - cd ${TRAVIS_BUILD_DIR}
@@ -17,7 +10,5 @@ script:
    - ./autogen.sh
    - ./configure
    - make
-   - sudo make install
    - cd ../
-   - make
-   - hack/verify-gofmt.sh
+   - go test ./...
