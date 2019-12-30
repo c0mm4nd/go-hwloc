@@ -1,7 +1,7 @@
 package hwloc
 
 //#cgo CFLAGS: -I./hwloc/include
-//#cgo LDFLAGS: -L/usr/local/lib -lhwloc
+//#cgo LDFLAGS: -lhwloc
 // #include <stdint.h>
 // #include <hwloc.h>
 /*

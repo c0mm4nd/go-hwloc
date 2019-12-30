@@ -8,7 +8,7 @@ go:
 before_install:
   - cd hwloc
   - ./autogen.sh
-  - ./configure
+  - ./configure --enable-static
   - make
   - sudo make install
   - cd ..
