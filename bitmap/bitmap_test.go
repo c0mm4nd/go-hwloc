@@ -2,13 +2,14 @@ package bitmap
 
 import (
 	"log"
+	"reflect"
 	"testing"
 )
 
 // get gets a value from a bitmap, handling
 // all the error checking so it's not repeated
 // a million times.
-func get(b BitMap, i int) bool {
+func get(b BitMap, i uint64) bool {
 	val, err := b.IsSet(i)
 	if err != nil {
 		log.Fatal("error getting from bitmap", err)
@@ -19,7 +20,7 @@ func get(b BitMap, i int) bool {
 // TestCreate proves we can create a
 // bitmap and its size is as set.
 func TestCreate(t *testing.T) {
-	for size := range []int{1, 13, 27, 66} {
+	for _, size := range []uint64{1, 13, 27, 66} {
 		b := New(size)
 		if b.Size() != size {
 			t.Error("size doesn't match")
@@ -30,16 +31,20 @@ func TestCreate(t *testing.T) {
 func TestSet(t *testing.T) {
 	b := New(10)
 	b.Set(2)
-	vals, err := b.Values()
+	values, err := b.Values()
 	if err != nil {
 		t.Error(err)
 	}
-	if !slicesEqual(vals, []int{2}) {
+	if !slicesEqual(values, []uint64{2}) {
 		t.Error("values do not match")
 	}
 }
 
-func TestIsSet(t *testing.T) {
+func slicesEqual(from []uint64, to []uint64) bool {
+	return reflect.DeepEqual(from, to)
+}
+
+func TestIsSet0(t *testing.T) {
 	b := New(50)
 	b.Set(2)
 	if !get(b, 2) {
@@ -107,11 +112,11 @@ func TestValues(t *testing.T) {
 	b.Set(3)
 	b.Set(13)
 	b.Set(42)
-	vals, err := b.Values()
+	values, err := b.Values()
 	if err != nil {
 		t.Error(err)
 	}
-	if !slicesEqual(vals, []int{2, 3, 13, 42}) {
+	if !slicesEqual(values, []uint64{2, 3, 13, 42}) {
 		t.Error("didn't receive the expected values")
 	}
 }

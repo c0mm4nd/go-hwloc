@@ -1,6 +1,8 @@
-package topology
+package hwloc
 
-// #cgo LDFLAGS: -lhwloc
+//#cgo CFLAGS: -I./hwloc/include
+//#cgo LDFLAGS: -L${SRCDIR}/hwloc/hwloc/.libs -lhwloc
+// #include <stdint.h>
 // #include <hwloc.h>
 import "C"
 
@@ -18,7 +20,7 @@ type HwlocCPUSet struct {
 
 // NewCPUSet create a HwlocCPUSet instance based on hwloc_cpuset_t
 func NewCPUSet(cpuset C.hwloc_cpuset_t) *HwlocCPUSet {
-	var bm BitMap = NewBitmap(cpuset)
+	var bm = NewBitmap(cpuset)
 	return &HwlocCPUSet{
 		BitMap: bm,
 	}

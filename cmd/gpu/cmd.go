@@ -20,9 +20,8 @@ import (
 	"fmt"
 	"strconv"
 
+	hwloc "github.com/maoxs2/gohwloc"
 	"github.com/spf13/cobra"
-
-	"github.com/gpucloud/gohwloc/topology"
 )
 
 type lstopoOptions struct {
@@ -51,7 +50,7 @@ func newCommand() *cobra.Command {
 }
 
 func lstopo(opts lstopoOptions) error {
-	t, _ := topology.NewTopology()
+	t, _ := hwloc.NewTopology()
 	t.Load()
 	defer t.Destroy()
 	n, _ := t.GetNbobjsByType(topology.HwlocObjOSDevice)

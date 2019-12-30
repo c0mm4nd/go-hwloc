@@ -1,6 +1,7 @@
-package topology
+package hwloc
 
-// #cgo LDFLAGS: -lhwloc
+//#cgo CFLAGS: -I./hwloc/include
+//#cgo LDFLAGS: -L${SRCDIR}/hwloc/hwloc/.libs -lhwloc
 // #include <hwloc.h>
 // #include <hwloc/bitmap.h>
 import "C"

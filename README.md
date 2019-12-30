@@ -1,5 +1,5 @@
 [![Build Status](https://travis-ci.org/carmark/gohwloc.svg?branch=master)](https://travis-ci.org/carmark/gohwloc)
-
+[![Go Doc](https://godoc.org/godoc.org/github.com/maoxs2/gohwloc?status.svg)](https://godoc.org/github.com/maoxs2/gohwloc)
 # GoHwloc
 
 ## Introduction
@@ -8,14 +8,14 @@ Golang binding for hwloc
 ## Installation
 
 ```
-$ git clone
+$ cd MyName/MyProject
+$ git clone https://github.com/maoxs2/gohwloc
 $ cd gohwloc/hwloc
 $ ./autogen.sh
 $ ./configure
 $ make
-$ make install
 $ cd ..
-$ make
+# then you can `import "github.com/MyName/MyProject/hwloc" ` from the folder package
 ```
 
 # Hwloc

@@ -1,7 +1,9 @@
-package topology
+package hwloc
 
-// #cgo CFLAGS: -g -Wall
-// #cgo LDFLAGS: -lhwloc
+//#cgo CFLAGS: -g -Wall
+//#cgo CFLAGS: -I./hwloc/include
+//#cgo LDFLAGS: -L${SRCDIR}/hwloc/hwloc/.libs -lhwloc
+// #include <stdint.h>
 // #include <hwloc.h>
 import "C"
 import (
@@ -16,7 +18,7 @@ type Topology struct {
 }
 
 func NewTopology() (*Topology, error) {
-	var topology C.hwloc_topology_t = &C.struct_hwloc_topology{}
+	var topology = &C.struct_hwloc_topology{}
 	C.hwloc_topology_init(&topology) // initialization
 
 	return &Topology{

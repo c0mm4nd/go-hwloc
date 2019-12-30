@@ -11,7 +11,7 @@ import (
 	"log"
 )
 
-var ErrOutOfRange = errors.New("Value out of range.")
+var ErrOutOfRange = errors.New("value out of range")
 
 // BitMap is a struct containing a slice of bytes,
 // being used as a bitmap.

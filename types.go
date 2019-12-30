@@ -1,9 +1,10 @@
-package topology
+package hwloc
 
-// #cgo LDFLAGS: -lhwloc
+//#cgo CFLAGS: -I./hwloc/include
+//#cgo LDFLAGS: -L${SRCDIR}/hwloc/hwloc/.libs -lhwloc
+// #include <stdint.h>
 // #include <hwloc.h>
 import "C"
-import "github.com/gpucloud/gohwloc/bitmap"
 
 // HwlocNodeSet A node set is a bitmap whose bits are set according to NUMA memory node physical OS indexes.
 /*
@@ -18,7 +19,7 @@ import "github.com/gpucloud/gohwloc/bitmap"
  * See also \ref hwlocality_helper_nodeset_convert.
  */
 type HwlocNodeSet struct {
-	bitmap.BitMap
+	BitMap
 	hwloc_nodeset_t C.hwloc_bitmap_t
 }
 
@@ -444,6 +445,10 @@ const (
 	HwlocMemBindMixed HwlocMemBindPolicy = -1
 )
 
+func (m HwlocMemBindPolicy) CType() C.hwloc_membind_policy_t {
+	return C.hwloc_membind_policy_t(m)
+}
+
 // HwlocMemBindFlag Memory binding flags.
 /*
  * These flags can be used to refine the binding policy.
@@ -500,6 +505,10 @@ const (
 	 */
 	HwlocMemBindByNodeSet HwlocMemBindFlag = 1 << 5
 )
+
+func (m HwlocMemBindFlag) CType() C.int {
+	return C.int(m)
+}
 
 // HwlocTopologyFlags Flags to be set onto a topology context before load.
 /*

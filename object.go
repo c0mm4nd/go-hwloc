@@ -1,6 +1,8 @@
-package topology
+package hwloc
 
-// #cgo LDFLAGS: -lhwloc
+//#cgo CFLAGS: -I./hwloc/include
+//#cgo LDFLAGS: -L${SRCDIR}/hwloc/hwloc/.libs -lhwloc
+// #include <stdint.h>
 // #include <hwloc.h>
 /*
 uint64_t get_obj_local_memory(hwloc_obj_t obj) {

@@ -1,4 +1,10 @@
-package topology
+package hwloc
+
+//#cgo CFLAGS: -I./hwloc/include
+//#cgo LDFLAGS: -L${SRCDIR}/hwloc/hwloc/.libs -lhwloc
+// #include <stdint.h>
+// #include <hwloc.h>
+import "C"
 
 // TODO
 /*
@@ -25,3 +31,12 @@ hwloc_alloc_membind_policy(hwloc_topology_t topology, size_t len, hwloc_const_bi
 
 HWLOC_DECLSPEC int hwloc_free(hwloc_topology_t topology, void *addr, size_t len);
 */
+
+func HwlocGetNUMANodeObjByOSIndex(topology *Topology, affinity uint32) *HwlocNodeSet {
+	node := C.hwloc_get_numanode_obj_by_os_index(topology.hwloc_topology, C.uint32_t(affinity))
+	return &HwlocNodeSet{hwloc_nodeset_t: node.nodeset}
+}
+
+func HwlocSetMemBind(topology *Topology, set *HwlocNodeSet, policy HwlocMemBindPolicy, flags HwlocMemBindFlag) {
+	C.hwloc_set_membind(topology.hwloc_topology, set.hwloc_nodeset_t, policy.CType(), flags.CType())
+}
