@@ -5,13 +5,13 @@ go:
   - 1.12
   - 1.13
 
-install:
+before_install:
   - cd hwloc
   - ./autogen.sh
   - ./configure
   - make
   - sudo make install
+  - cd ..
 
 script:
-  - cd ${TRAVIS_BUILD_DIR}
   - go test ./...
