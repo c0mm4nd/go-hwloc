@@ -2,9 +2,11 @@ sudo: required
 language: go
 
 go:
-  - 1.13
+  - "1.13"
 
 before_install:
+  - sudo apt-get update
+  - sudo apt-get -y install libxml2-dev
   - cd hwloc
   - ./autogen.sh
   - ./configure --enable-static
