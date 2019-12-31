@@ -1,8 +1,7 @@
-// +build !windows
-
 package hwloc
 
 //#cgo LDFLAGS: -lhwloc
+//#cgo LDFLAGS: -static -static-libgcc
 // #include <stdint.h>
 // #include <hwloc.h>
 import "C"
