@@ -1,6 +1,6 @@
 # go-hwloc
 
-[![Build Status](https://travis-ci.org/maoxs2/go-hwloc.svg?branch=master)](https://travis-ci.org/carmark/go-hwloc)
+[![Build Status](https://travis-ci.org/maoxs2/go-hwloc.svg?branch=master)](https://travis-ci.org/maoxs2/go-hwloc)
 [![Go Doc](https://godoc.org/godoc.org/github.com/maoxs2/go-hwloc?status.svg)](https://godoc.org/github.com/maoxs2/go-hwloc)
 
 ## Introduction
@@ -8,15 +8,16 @@ Golang binding for hwloc
 
 ## Installation
 
-```
+```bash
 $ cd MyName/MyProject
 $ git clone https://github.com/maoxs2/go-hwloc --recursive
 $ cd go-hwloc/hwloc
 $ ./autogen.sh
 $ ./configure
 $ make
-
-# then you can `import hwloc "github.com/MyName/MyProject/go-hwloc" ` from other go files in your project
+$ sudo make install
+$
+$ # then you can `import hwloc "github.com/MyName/MyProject/go-hwloc" ` from other go files in your project
 
 ```
 

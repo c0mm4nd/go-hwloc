@@ -2,13 +2,12 @@ sudo: required
 language: go
 
 go:
-  - 1.12
   - 1.13
 
 before_install:
   - cd hwloc
   - ./autogen.sh
-  - ./configure
+  - ./configure --enable-static
   - make
   - sudo make install
   - sudo ldconfig /usr/local/lib
