@@ -1,4 +1,5 @@
 // +build !windows
+
 package hwloc
 
 //#cgo LDFLAGS: -lhwloc
