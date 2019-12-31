@@ -5,11 +5,9 @@ go:
   - "1.13"
 
 before_install:
-  - sudo apt-get update
-  - sudo apt-get -y install libxml2-dev
   - cd hwloc
   - ./autogen.sh
-  - ./configure --enable-static
+  - ./configure --disable-libxml2
   - make
   - sudo make install
   - sudo ldconfig /usr/local/lib
