@@ -1,6 +1,6 @@
 # go-hwloc
 
-[![Build Status](https://travis-ci.org/maoxs2/go-hwloc.svg?branch=master)](https://travis-ci.org/maoxs2/go-hwloc)
+[![Build Status](https://travis-ci.com/maoxs2/go-hwloc.svg?branch=master)](https://travis-ci.com/maoxs2/go-hwloc)
 [![Go Doc](https://godoc.org/godoc.org/github.com/maoxs2/go-hwloc?status.svg)](https://godoc.org/github.com/maoxs2/go-hwloc)
 
 ## Introduction
