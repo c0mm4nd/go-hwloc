@@ -19,6 +19,8 @@ $ sudo make install
 $
 $ # then you can `import hwloc "github.com/MyName/MyProject/go-hwloc" ` from other go files in your project
 
+Warning: if you wanna build a static application/libary based on `go-hwloc`, [StaticBuild](https://github.com/open-mpi/hwloc/wiki/StaticBuild) of hwloc would be required.
+
 ```
 
 # Hwloc
