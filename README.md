@@ -4,23 +4,39 @@
 [![Go Doc](https://godoc.org/godoc.org/github.com/maoxs2/go-hwloc?status.svg)](https://godoc.org/github.com/maoxs2/go-hwloc)
 
 ## Introduction
-Golang binding for hwloc
 
-## Installation
+Golang binding for static hwloc
 
+## Ready
+
+Install hwloc from your system package manager or compile from the source in https://github.com/open-mpi/hwloc
+
+For example:
 ```bash
-$ cd MyName/MyProject
-$ git clone https://github.com/maoxs2/go-hwloc --recursive
-$ cd go-hwloc/hwloc
-$ ./autogen.sh
-$ ./configure
-$ make
-$ sudo make install
-$
-$ # then you can `import hwloc "github.com/MyName/MyProject/go-hwloc" ` from other go files in your project
+# Static Build
+git clone https://github.com/open-mpi/hwloc && cd hwloc
+./autogen.sh
+./configure --enable-static --disable-shared LDFLAGS="-static"
+make LDFLAGS=-all-static
+sudo make install
+sudo ldconfig /usr/local/lib
 ```
 
-**Warning**: if you wanna build a static application/libary based on `go-hwloc`, [StaticBuild](https://github.com/open-mpi/hwloc/wiki/StaticBuild) of hwloc would be required.
+## Usage
+
+```go
+import hwloc "github.com/maoxs2/go-hwloc"
+```
+
+## Extra
+
+- Q: Why not assemble hwloc into go lib?
+
+A: hwloc is a very powerful and platform-based native library, so comparing to provide a simple version, I prefer to let developers compile it by their own hands or the binary for their platform.
+
+- Q: Why build fails when using bazel?
+
+A: Bazel compiling project within a sandbox, which disallow linker find the "external" library, hwloc, so you should write `BUILD.bazel` and `WORKSPACE` for hwloc before using this go binding lib. Actually, it is what tensorflow does, and you can learn from [their practice](https://github.com/tensorflow/tensorflow/tree/master/third_party/hwloc)
 
 # Hwloc
 
