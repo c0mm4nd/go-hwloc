@@ -22,6 +22,23 @@ sudo make install
 sudo ldconfig /usr/local/lib
 ```
 
+## Development
+
+We have a [VSCode Developer Environment](.devcontainer) if you want to quickly create an environment with hwloc to develop. Once you start the container, try running the tests:
+
+```bash
+go test -v ./...
+```
+```console
+# go test -v ./...
+=== RUN   TestHwlocSetMemBind
+--- PASS: TestHwlocSetMemBind (0.69s)
+=== RUN   TestNewTopology
+--- PASS: TestNewTopology (0.49s)
+PASS
+ok      github.com/c0mm4nd/go-hwloc
+```
+
 ## Usage
 
 ```go
