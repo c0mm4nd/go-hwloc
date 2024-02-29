@@ -1,0 +1,34 @@
+name: test hwloc-go
+
+on:
+  pull_request: []
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Test hwloc-go
+    runs-on: ubuntu-latest
+    container:
+      image: golang:bookworm
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: ^1.21
+
+    - name: Install dependencies
+      run: |
+        apt-get update
+        apt-get install -y locales autoconf libtool automake build-essential
+    - name: Install hwloc
+      run: |
+        git clone https://github.com/open-mpi/hwloc /opt/hwloc && \
+        cd /opt/hwloc && \
+        ./autogen.sh && \
+        ./configure --enable-static --disable-shared LDFLAGS="-static" && \
+        make LDFLAGS=-all-static && \
+        make install && ldconfig /usr/local/lib      
+
+    - name: Test 
+      run: go test -v ./...

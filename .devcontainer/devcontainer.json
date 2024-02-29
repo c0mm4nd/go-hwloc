@@ -1,0 +1,17 @@
+{
+  "name": "hwloc-go Environment",
+  "dockerFile": "Dockerfile",
+  "context": "../",
+
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash"
+      },
+      "extensions": [
+        "golang.go"
+      ],
+    }
+  },
+  "postStartCommand": "git config --global --add safe.directory /workspaces/hwloc-go"
+}
